@@ -63,8 +63,8 @@ instance
     , HasField l s a
     , UpdateField l s b
     , FieldType l s ~ a
-    , f (UpdateType l s b) ~ ft
-    ) => IsFieldFunction l (a -> f b) (s -> ft) 'True
+    , UpdateType l s b ~ t
+    ) => IsFieldFunction l (a -> f b) (s -> f t) 'True
   where
     fieldFunction proxy f s = updateField proxy s <$> f (getField proxy s)
 
