@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -11,7 +10,7 @@
 module Data.OverloadedRecords
     (
     -- * Oveloaded Labels
-      IsLabel(..)
+      module Data.OverloadedLabels
 
     -- * Overloaded Records
     , FieldType
@@ -27,15 +26,8 @@ import Data.Functor (Functor, (<$>))
 import GHC.TypeLits (Symbol)
 import GHC.Exts (Proxy#)
 
-#ifdef HAVE_OVERLOADED_LABELS
-import GHC.OverloadedLabels (IsLabel(fromLabel))
-#endif
+import Data.OverloadedLabels
 
-
-#ifndef HAVE_OVERLOADED_LABELS
-class IsLabel (l :: Symbol) a where
-    fromLabel :: Proxy# l -> a
-#endif
 
 type family FieldType (l :: Symbol) (s :: *) :: *
 type family UpdateType (l :: Symbol) (s :: *) (a :: *) :: *
