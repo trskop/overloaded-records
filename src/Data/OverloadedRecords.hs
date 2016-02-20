@@ -30,7 +30,12 @@ import GHC.Exts (Proxy#)
 import Data.OverloadedLabels
 
 
+-- | When accessing field named @l :: Symbol@ of a record @s :: *@, then the
+-- type of the value in that field is @'FieldType' l s@.
 type family FieldType (l :: Symbol) (s :: *) :: *
+
+-- | If field @l :: Symbol@ of a record @s :: *@ is set to new value which has
+-- type @a :: *@, then the modified record will have type @'UpdateType' l s a@.
 type family UpdateType (l :: Symbol) (s :: *) (a :: *) :: *
 
 -- Definition of this class is based on: https://phabricator.haskell.org/D1687
