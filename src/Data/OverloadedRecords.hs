@@ -52,29 +52,29 @@ type family FromArrow (a :: *) :: Bool where
 
 class
     ( z ~ FromArrow x
-    ) => IsFieldFunction (l :: Symbol) x y (z :: Bool) | l y -> x
+    ) => IsFieldAccessor (l :: Symbol) x y (z :: Bool) | l y -> x
   where
-    fieldFunction :: Proxy# l -> x -> y
+    fieldAccessor :: Proxy# l -> x -> y
 
-instance IsFieldFunction l x y (FromArrow x) => IsLabel l (x -> y) where
-    fromLabel = fieldFunction
+instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
+    fromLabel = fieldAccessor
 
--- @'Functor' f => 'Proxy#' l -> (a -> f b) -> s -> f t@
+-- | @'Functor' f => 'Proxy#' l -> (a -> f b) -> s -> f t@
 instance
     ( Functor f
     , HasField l s a
     , SetField l s b
     , FieldType l s ~ a
     , UpdateType l s b ~ t
-    ) => IsFieldFunction l (a -> f b) (s -> f t) 'True
+    ) => IsFieldAccessor l (a -> f b) (s -> f t) 'True
   where
-    fieldFunction proxy f s = setField proxy s <$> f (getField proxy s)
+    fieldAccessor proxy f s = setField proxy s <$> f (getField proxy s)
 
 -- | @'Proxy#' l -> r -> a@
 instance
     ( HasField l s a
     , FieldType l s ~ a
     , FromArrow s ~ 'False
-    ) => IsFieldFunction l s a 'False
+    ) => IsFieldAccessor l s a 'False
   where
-    fieldFunction = getField
+    fieldAccessor = getField
