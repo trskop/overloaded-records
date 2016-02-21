@@ -30,7 +30,7 @@ import Data.OverloadedLabels
 label :: String -> DecsQ
 label l = (:) <$> sig <*> labelNoSig l
   where
-    sig = mkName l `sigD` [t|forall a. IsLabel => $(litT $ strTyLit l) a => a|]
+    sig = mkName l `sigD` [t|forall a. IsLabel $(litT $ strTyLit l) a => a|]
 
 labelNoSig :: String -> DecsQ
 labelNoSig l = sequenceA [varP (mkName l) `valD` normalB body $ []]
