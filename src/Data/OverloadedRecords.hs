@@ -19,6 +19,8 @@ module Data.OverloadedRecords
 
     , UpdateType
     , SetField(..)
+    , Setter
+    , set
     )
   where
 
@@ -44,12 +46,11 @@ class HasField (l :: Symbol) s a | l s -> a where
     getField :: Proxy# l -> s -> a
 
 class
-    ( HasField l s a
-    , FieldType l s ~ a
-    , UpdateType l s a ~ s
-    ) => SetField l s a
+    ( HasField l s b
+    , FieldType l s ~ b
+    ) => SetField l s b
   where
-    setField :: Proxy# l -> s -> a -> UpdateType l s a
+    setField :: Proxy# l -> s -> b -> UpdateType l s b
 
 type family FromArrow (a :: *) :: Bool where
     FromArrow (x -> y) = 'True
@@ -83,3 +84,15 @@ instance
     ) => IsFieldAccessor l s a 'False
   where
     fieldAccessor = getField
+
+newtype Setter s t b = Setter (s -> b -> t)
+
+set :: Setter s t b -> s -> b -> t
+set (Setter f) = f
+
+instance
+    ( SetField l s b
+    , UpdateType l s b ~ t
+    ) => IsLabel l (Setter s t b)
+  where
+    fromLabel _proxy = Setter (setField _proxy)
