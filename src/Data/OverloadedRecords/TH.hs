@@ -5,7 +5,9 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TupleSections #-}
 
 #if HAVE_MONAD_FAIL && MIN_VERSION_template_haskell(2,11,0)
 #define _FAIL_IN_MONAD
@@ -16,7 +18,7 @@
 module Data.OverloadedRecords.TH
   where
 
-import Prelude (Num((-)), error, fromIntegral)
+import Prelude (Num((-)), fromIntegral)
 
 import Control.Applicative (Applicative((<*>)))
 import Control.Monad (Monad((>>=) _FAIL_IN_MONAD, return), replicateM)
@@ -71,6 +73,7 @@ import Language.Haskell.TH
 --  , mkName
     , nameBase
     , newName
+    , recUpdE
     , reify
 --  , sigD
     , strTyLit
@@ -203,8 +206,8 @@ deriveForConstructor params name typeVars = \case
             f Nothing strict argType
 
     RecC constructorName args ->
-        deriveFor constructorName args $ \(accessorName, strict, argType) f ->
-            f (Just accessorName) strict argType
+        deriveFor constructorName args $ \(accessor, strict, argType) f ->
+            f (Just accessor) strict argType
 
     InfixC arg0 constructorName arg1 ->
         deriveFor constructorName [arg0, arg1] $ \(strict, argType) f ->
@@ -220,41 +223,53 @@ deriveForConstructor params name typeVars = \case
         -> DecsQ
     deriveFor constrName args f =
         fmap concat . forM (withIndexes args) $ \(idx, arg) ->
-            f arg (deriveForField params name typeVars' constrName numArgs idx)
+            f arg $ \accessor strict fieldType' ->
+                deriveForField params DeriveFieldParams
+                    { typeName = name
+                    , typeVariables = List.map getTypeName typeVars
+                    , constructorName = constrName
+                    , numberOfArgs = fromIntegral $ List.length args
+                    , currentIndex = idx
+                    , accessorName = accessor
+                    , strictness = strict
+                    , fieldType = fieldType'
+                    }
       where
-        numArgs = fromIntegral $ List.length args
-        typeVars' = List.map typeName typeVars
-
-        typeName :: TyVarBndr -> Name
-        typeName = \case
+        getTypeName :: TyVarBndr -> Name
+        getTypeName = \case
             PlainTV n -> n
             KindedTV n _kind -> n
 
     withIndexes = List.zip [(0 :: Word) ..]
 
+data DeriveFieldParams = DeriveFieldParams
+    { typeName :: Name
+    -- ^ Record name, i.e. type constructor name.
+    , typeVariables :: [Name]
+    -- ^ Free type variables of a type constructor.
+    , constructorName :: Name
+    -- ^ Data constructor name.
+    , numberOfArgs :: Word
+    -- ^ Number of arguments that data constructor takes.
+    , currentIndex :: Word
+    -- ^ Index of the current argument of a data constructor for which we are
+    -- deriving overloaded record field instances. Indexing starts from zero.
+    -- In other words 'currentIndex' is between zero (including) and
+    -- 'numberOfArgs' (excluding).
+    , accessorName :: Maybe Name
+    -- ^ Record field accessor, if available, otherwise 'Nothing'.
+    , strictness :: Strict
+    -- ^ Strictness annotation of the current data constructor argument.
+    , fieldType :: Type
+    -- ^ Type of the current data constructor argument.
+    }
+
 -- TODO: Create a data type for all the arguments.
 deriveForField
     :: DeriveOverloadedRecordsParams
-    -> Name
-    -- ^ Record type name.
-    -> [Name]
-    -- ^ Record type arguments.
-    -> Name
-    -- ^ Constructor name.
-    -> Word
-    -- ^ Number of constructor arguments.
-    -> Word
-    -- ^ Index of a constructor argument, starting from zero.
-    -> Maybe Name
-    -- ^ Accessor name of a constructor argument. 'Nothing' means that there is
-    -- no accessor available for it.
-    -> Strict
-    -- ^ Strictness of constructor argument.
-    -> Type
-    -- ^ Type of constructor argument.
+    -> DeriveFieldParams
     -> DecsQ
-deriveForField params typeName typeVars constrName numArgs idx accessor
-  _strict fieldType =
+deriveForField params DeriveFieldParams{..} =
     case possiblyLabel of
         Nothing -> return []
         Just label -> (<>)
@@ -264,38 +279,52 @@ deriveForField params typeName typeVars constrName numArgs idx accessor
           where
             labelType = strTyLitT label
   where
-    possiblyLabel = _makeAccessorName params (nameBase typeName) (nameBase constrName)
-        idx (fmap nameBase accessor)
+    possiblyLabel = _makeAccessorName params (nameBase typeName)
+        (nameBase constructorName) currentIndex (fmap nameBase accessorName)
 
-    recordType = foldl appT (conT typeName) $ List.map varT typeVars
+    recordType = foldl appT (conT typeName) $ List.map varT typeVariables
 
     -- TODO: When field type is polymorphic, then we should allow to change it.
     newFieldType = return fieldType
     newRecordType = recordType
 
-    -- \(C _ _ ... _ a _ _ ... _) -> a
-    getterExpr = do
-        a <- newName "a"
-        lamE [return . ConP constrName $ nthArg (VarP a)] (varE a)
+    -- Number of variables, i.e. arguments of a constructor, to the right of
+    -- the currently processed field.
+    numVarsOnRight = numberOfArgs - currentIndex - 1
+
+    inbetween :: (a -> [b]) -> a -> a -> b -> [b]
+    inbetween f a1 a2 b = f a1 <> (b : f a2)
+
+    getterExpr = case accessorName of
+        Just name -> varE name
+        Nothing -> do
+            a <- newName "a"
+            -- \(C _ _ ... _ a _ _ ... _) -> a
+            lamE [return . ConP constructorName $ nthArg (VarP a)] (varE a)
       where
         nthArg :: Pat -> [Pat]
-        nthArg var = wildPs idx <> (var : wildPs (numArgs - idx - 1))
+        nthArg = inbetween wildPs currentIndex numVarsOnRight
 
-    -- \(C a_0 a_1 ... a_(i - 1) _ a_(i + 1) a_(i + 2) ... a_(n)) b ->
-    --     C a_0 a_1 ... a_(i - 1) b a_(i + 1) a_(i + 2) ... a_(n)
-    setterExpr = do
-        varsBefore <- newNames idx "a"
-        b <- newName "b"
-        varsAfter <- newNames (numArgs - idx - 1) "a"
+    setterExpr = case accessorName of
+        Just name -> do
+            s <- newName "s"
+            b <- newName "b"
+            lamE [varP s, varP b] $ recUpdE (varE s) [(name, ) <$> varE b]
+        Nothing -> do
+            varsBefore <- newNames currentIndex "a"
+            b <- newName "b"
+            varsAfter <- newNames numVarsOnRight "a"
 
-        lamE [constrPattern varsBefore varsAfter, varP b]
-            $ constrExpression varsBefore (varE b) varsAfter
-      where
-        constrPattern before after =
-            conP constrName $ varPs before <> (wildP : varPs after)
+            -- \(C a_0 a_1 ... a_(i - 1) _ a_(i + 1) a_(i + 2) ... a_(n)) b ->
+            --     C a_0 a_1 ... a_(i - 1) b a_(i + 1) a_(i + 2) ... a_(n)
+            lamE [constrPattern varsBefore varsAfter, varP b]
+                $ constrExpression varsBefore (varE b) varsAfter
+          where
+            constrPattern before after =
+                conP constructorName $ inbetween varPs before after wildP
 
-        constrExpression before b after =
-            foldl appE (conE constrName) $ varEs before <> (b : varEs after)
+            constrExpression before b after = foldl appE (conE constructorName)
+                $ varEs before <> (b : varEs after)
 
 deriveGetter :: TypeQ -> TypeQ -> TypeQ -> ExpQ -> DecsQ
 deriveGetter labelType recordType fieldType getter =
