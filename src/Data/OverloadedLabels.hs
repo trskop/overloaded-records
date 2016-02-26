@@ -12,8 +12,6 @@ module Data.OverloadedLabels
     )
   where
 
-import Data.Proxy (Proxy(Proxy))
-
 #ifdef HAVE_OVERLOADED_LABELS
 import GHC.OverloadedLabels (IsLabel(fromLabel))
 #else
@@ -26,6 +24,3 @@ import GHC.Exts (Proxy#)
 class IsLabel (l :: Symbol) a where
     fromLabel :: Proxy# l -> a
 #endif
-
-instance IsLabel l (Proxy l) where
-    fromLabel _proxy = Proxy
