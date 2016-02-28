@@ -49,8 +49,8 @@ import Data.OverloadedLabels (IsLabel(fromLabel))
 -- | Define overloaded label:
 --
 -- @
--- <label-name> :: 'IsLabel' "<label-name>" a => a
--- <label-name> = 'fromLabel' (proxy# :: Proxy# "<label-name>")
+-- \<label-name\> :: 'IsLabel' \"\<label-name\>\" a => a
+-- \<label-name\> = 'fromLabel' ('proxy#' :: 'Proxy#' \"\<label-name\>\")
 -- @
 label :: String -> DecsQ
 label l = (:) <$> sig <*> labelNoSig l
@@ -60,7 +60,7 @@ label l = (:) <$> sig <*> labelNoSig l
 -- | Define overloaded label, but without a type signature:
 --
 -- @
--- <label-name> = 'fromLabel' (proxy# :: Proxy# "<label-name>")
+-- \<label-name\> = 'fromLabel' ('proxy#' :: 'Proxy#' \"\<label-name\>\")
 -- @
 labelNoSig :: String -> DecsQ
 labelNoSig l = sequenceA [varP (mkName l) `valD` normalB body $ []]

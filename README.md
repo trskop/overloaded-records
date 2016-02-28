@@ -17,7 +17,7 @@ Implementation of /Overloaded Records/ based on current GHC proposal.
 This implementation is highly experimental and may change rapidly.
 
 More about the current status of OverloadedRecordFields language extension can
-be found on [GHC Wiki: OverloadedRecordFields][]
+be found on [GHC Wiki: OverloadedRecordFields][].
 
 
 ## Usage Example
@@ -32,9 +32,10 @@ be found on [GHC Wiki: OverloadedRecordFields][]
 module FooBar
   where
 
+import Data.Default.Class (Default(def))
+
 import Data.OverloadedRecords.TH (overloadedRecords)
 import Data.OverloadedLabels.TH (label, labels)
-import Data.Default.Class (Default(def))
 
 
 data Foo a = Foo
