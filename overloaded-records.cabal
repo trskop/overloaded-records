@@ -39,16 +39,20 @@ library
   other-extensions:
       CPP
     , DataKinds
+    , DeriveDataTypeable
+    , DeriveGeneric
     , ExplicitForAll
     , FlexibleContexts
     , FlexibleInstances
     , FunctionalDependencies
     , KindSignatures
+    , LambdaCase
     , MagicHash
     , MultiParamTypeClasses
     , NoImplicitPrelude
-    , RankNTypes
+    , RecordWildCards
     , TemplateHaskell
+    , TupleSections
     , TypeFamilies
     , UndecidableInstances
 
