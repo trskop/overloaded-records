@@ -1,9 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -15,6 +13,17 @@
 #define _FAIL_IN_MONAD , fail
 #endif
 
+-- |
+-- Module:       $HEADER$
+-- Description:  Derive magic instances for OverloadedRecordFields.
+-- Copyright:    (c) 2016, Peter Trško
+-- License:      BSD3
+--
+-- Maintainer:   peter.trsko@gmail.com
+-- Stability:    experimental
+-- Portability:  NoImplicitPrelude
+--
+-- Derive magic instances for OverloadedRecordFields.
 module Data.OverloadedRecords.TH
   where
 
@@ -44,14 +53,12 @@ import Data.String (String)
 import Data.Traversable (forM)
 import Data.Typeable (Typeable)
 import Data.Word (Word)
---import GHC.Exts (Proxy#, proxy#)
 import GHC.Generics (Generic)
 import Text.Show (Show(show))
 
 import Language.Haskell.TH
     ( Con(ForallC, InfixC, NormalC, RecC)
     , Dec(DataD, NewtypeD)
---  , DecQ
     , DecsQ
     , ExpQ
     , Info(TyConI)
@@ -70,12 +77,10 @@ import Language.Haskell.TH
     , conT
     , lamE
     , litT
---  , mkName
     , nameBase
     , newName
     , recUpdE
     , reify
---  , sigD
     , strTyLit
     , varE
     , varP
@@ -86,10 +91,16 @@ import Language.Haskell.TH
 import Data.Default.Class (Default(def))
 
 import Data.OverloadedRecords
+    ( FieldType
+    , HasField(getField)
+    , SetField(setField)
+    , UpdateType
+    )
 
 
 data DeriveOverloadedRecordsParams = DeriveOverloadedRecordsParams
     { _strictAccessors :: Bool
+    -- ^ Make setter and getter strict. **Currently unused.**
     , _makeAccessorName
         :: String
         -> String
@@ -165,13 +176,27 @@ defaultMakeAccessorName typeName constructorName _fieldPosition = \case
         typePrefix = headToLower typeName
         constructorPrefix = headToLower constructorName
 
+-- |
+-- @
+-- 'def' = 'DeriveOverloadedRecordsParams'
+--     { '_strictAccessors' = 'False'
+--     , '_makeAccessorName' = 'defaultMakeAccessorName'
+--     }
+-- @
 instance Default DeriveOverloadedRecordsParams where
     def = DeriveOverloadedRecordsParams
         { _strictAccessors = False
         , _makeAccessorName = defaultMakeAccessorName
         }
 
-deriveOverloadedRecords :: DeriveOverloadedRecordsParams -> Name -> DecsQ
+-- | Derive magic OverloadedRecordFields instances for specified type name.
+deriveOverloadedRecords
+    :: DeriveOverloadedRecordsParams
+    -- ^ Parameters for customization of deriving process. Use 'def' to get
+    -- default behaviour.
+    -> Name
+    -- ^ Name of the type for which magic instances should be derived.
+    -> DecsQ
 deriveOverloadedRecords params = withReified $ \name -> \case
     TyConI dec -> case dec of
         -- Not supporting DatatypeContexts, hence the [] required as the first
@@ -182,7 +207,11 @@ deriveOverloadedRecords params = withReified $ \name -> \case
         NewtypeD [] typeName typeVars constructor _deriving ->
 #endif
             deriveForConstructor params typeName typeVars constructor
+#if MIN_VERSION_template_haskell(2,11,0)
+        DataD [] typeName typeVars _kindSignature constructors _deriving ->
+#else
         DataD [] typeName typeVars constructors _deriving ->
+#endif
             fmap concat . forM constructors
                 $ deriveForConstructor params typeName typeVars
         x -> canNotDeriveError name x
@@ -331,6 +360,7 @@ deriveForField params DeriveFieldParams{..} =
             constrExpression before b after = foldl appE (conE constructorName)
                 $ varEs before <> (b : varEs after)
 
+-- | Derive only getter related instances.
 deriveGetter :: TypeQ -> TypeQ -> TypeQ -> ExpQ -> DecsQ
 deriveGetter labelType recordType fieldType getter =
     [d| type instance FieldType $(labelType) $(recordType) = $(fieldType)
@@ -339,6 +369,7 @@ deriveGetter labelType recordType fieldType getter =
             getField _proxy = $(getter)
     |]
 
+-- | Derive only setter related instances.
 deriveSetter :: TypeQ -> TypeQ -> TypeQ -> TypeQ -> TypeQ -> ExpQ -> DecsQ
 deriveSetter labelType recordType fieldType newRecordType newFieldType setter =
     [d| type instance UpdateType $(labelType) $(recordType) $(newFieldType) =
@@ -348,9 +379,11 @@ deriveSetter labelType recordType fieldType newRecordType newFieldType setter =
             setField _proxy = $(setter)
     |]
 
+-- | Construct list of wildcard patterns ('WildP').
 wildPs :: Word -> [Pat]
 wildPs n = List.replicate (fromIntegral n) WildP
 
+-- | Construct list of new names usin 'newName'.
 newNames :: Word -> String -> Q [Name]
 newNames n s = fromIntegral n `replicateM` newName s
 
