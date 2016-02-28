@@ -32,6 +32,14 @@
 --
 -- Derive magic instances for OverloadedRecordFields.
 module Data.OverloadedRecords.TH
+    (
+    -- * Derive OverloadedRecordFields instances
+      overloadedRecords
+    , DeriveOverloadedRecordsParams
+    , MakeAccessorName
+    , makeAccessorName
+    , defaultMakeAccessorName
+    )
   where
 
 import Prelude (Num((-)), fromIntegral)
@@ -107,32 +115,44 @@ import Data.OverloadedRecords
     )
 
 
+-- Parameters for customization of deriving process. Use 'def' to get
+-- default behaviour.
 data DeriveOverloadedRecordsParams = DeriveOverloadedRecordsParams
     { _strictAccessors :: Bool
     -- ^ Make setter and getter strict. **Currently unused.**
-    , _makeAccessorName
-        :: String
-        -> String
-        -> Word
-        -> Maybe String
-        -> Maybe String
-    -- ^ Pseudo type signature of this function is:
-    --
-    -- @
-    -- :: TypeName
-    -- -> ConstructorName
-    -- -> FieldIndex
-    -- -> Maybe AccessorName
-    -- -> Maybe OverloadedLabelName
-    -- @
-    --
-    -- If field has eccessor then the function will get its name or 'Nothing'
-    -- otherwise. Function has to return 'Nothing' in case when generating
-    -- overloaded label and overloaded record field instances is not desired.
+    , _makeAccessorName :: MakeAccessorName
+    -- ^ See 'MakeAccessorName' for description.
     }
   deriving (Generic, Typeable)
 
--- | Supose we have a weird type definition as this:
+-- | Pseudo type definition:
+--
+-- @
+-- :: TypeName
+-- -> ConstructorName
+-- -> FieldIndex
+-- -> Maybe AccessorName
+-- -> Maybe OverloadedLabelName
+-- @
+--
+-- If field has an accessor then the function will get its name or 'Nothing'
+-- otherwise.  Function has to return 'Nothing' in case when generating
+-- overloaded record field instances is not desired.
+--
+-- @FieldIndex@ is starting from zero.
+type MakeAccessorName =
+    String -> String -> Word -> Maybe String -> Maybe String
+
+-- | Lens for accessing function that specifies what magic instances will be
+-- defined and what will be the names of overloaded record fields.
+makeAccessorName
+    :: Functor f
+    => (MakeAccessorName -> f MakeAccessorName)
+    -> DeriveOverloadedRecordsParams -> f DeriveOverloadedRecordsParams
+makeAccessorName f s@DeriveOverloadedRecordsParams{_makeAccessorName = a} =
+    (\b -> s{_makeAccessorName = b}) <$> f a
+
+-- | Suppose we have a weird type definition as this:
 --
 -- @
 -- data SomeType = SomeConstructor
@@ -188,8 +208,8 @@ defaultMakeAccessorName typeName constructorName _fieldPosition = \case
 -- |
 -- @
 -- 'def' = 'DeriveOverloadedRecordsParams'
---     { '_strictAccessors' = 'False'
---     , '_makeAccessorName' = 'defaultMakeAccessorName'
+--     { strictAccessors = 'False'
+--     , 'makeAccessorName' = 'defaultMakeAccessorName'
 --     }
 -- @
 instance Default DeriveOverloadedRecordsParams where
@@ -199,14 +219,14 @@ instance Default DeriveOverloadedRecordsParams where
         }
 
 -- | Derive magic OverloadedRecordFields instances for specified type name.
-deriveOverloadedRecords
+overloadedRecords
     :: DeriveOverloadedRecordsParams
     -- ^ Parameters for customization of deriving process. Use 'def' to get
     -- default behaviour.
     -> Name
     -- ^ Name of the type for which magic instances should be derived.
     -> DecsQ
-deriveOverloadedRecords params = withReified $ \name -> \case
+overloadedRecords params = withReified $ \name -> \case
     TyConI dec -> case dec of
         -- Not supporting DatatypeContexts, hence the [] required as the first
         -- argument to NewtypeD and DataD.
