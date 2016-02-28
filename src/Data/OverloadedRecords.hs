@@ -8,12 +8,29 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+-- |
+-- Module:       $HEADER$
+-- Description:  Magic classes for OverloadedRecordFields.
+-- Copyright:    (c) 2016, Peter Trško
+-- License:      BSD3
+--
+-- Maintainer:   peter.trsko@gmail.com
+-- Stability:    experimental
+-- Portability:  DataKinds, FlexibleInstances, FunctionalDependencies,
+--               MagicHash, MultiParamTypeClasses, NoImplicitPrelude,
+--               TypeFamilies, UndecidableInstances
+--
+-- Magic classes for OverloadedRecordFields.
+--
+-- Implementation is based on:
+-- <https://github.com/adamgundry/records-prototype/blob/master/CoherentPrototype.hs>
+-- by Adam Gundry under MIT License.
 module Data.OverloadedRecords
     (
     -- * Oveloaded Labels
       module Data.OverloadedLabels
 
-    -- * Overloaded Records
+    -- * Overloaded Record Fields
     , FieldType
     , HasField(..)
 
@@ -40,7 +57,8 @@ type family FieldType (l :: Symbol) (s :: *) :: *
 -- type @a :: *@, then the modified record will have type @'UpdateType' l s a@.
 type family UpdateType (l :: Symbol) (s :: *) (a :: *) :: *
 
--- Definition of this class is based on: https://phabricator.haskell.org/D1687
+-- | Definition of this class is based on:
+-- <https://phabricator.haskell.org/D1687>
 class HasField (l :: Symbol) s a | l s -> a where
     -- | Get value of a field.
     getField :: Proxy# l -> s -> a
@@ -50,8 +68,10 @@ class
     , FieldType l s ~ b
     ) => SetField l s b
   where
+    -- | Set value of a field.
     setField :: Proxy# l -> s -> b -> UpdateType l s b
 
+-- | Returns 'True' if type @a@ is a function.
 type family FromArrow (a :: *) :: Bool where
     FromArrow (x -> y) = 'True
     FromArrow t        = 'False

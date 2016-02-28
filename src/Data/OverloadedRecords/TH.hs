@@ -15,6 +15,7 @@
 #endif
 #endif
 
+-- Package template-haskell 2.11 is missing MonadFail instance for Q.
 #define _FAIL_IN_MONAD , fail
 
 -- |
@@ -25,7 +26,9 @@
 --
 -- Maintainer:   peter.trsko@gmail.com
 -- Stability:    experimental
--- Portability:  NoImplicitPrelude
+-- Portability:  CPP, DeriveDataTypeable, DeriveGeneric, LambdaCase,
+--               NoImplicitPrelude, RecordWildCards, TemplateHaskell,
+--               TupleSections
 --
 -- Derive magic instances for OverloadedRecordFields.
 module Data.OverloadedRecords.TH
