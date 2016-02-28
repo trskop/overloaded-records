@@ -41,7 +41,7 @@ import qualified Data.List as List
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Monoid ((<>))
 import Data.String (String)
-import Data.Traversable (forM, mapM)
+import Data.Traversable (forM)
 import Data.Typeable (Typeable)
 import Data.Word (Word)
 --import GHC.Exts (Proxy#, proxy#)
@@ -176,10 +176,15 @@ deriveOverloadedRecords params = withReified $ \name -> \case
     TyConI dec -> case dec of
         -- Not supporting DatatypeContexts, hence the [] required as the first
         -- argument to NewtypeD and DataD.
+#if MIN_VERSION_template_haskell(2,12,0)
+        NewtypeD [] typeName typeVars _kindSignature constructor _deriving ->
+#else
         NewtypeD [] typeName typeVars constructor _deriving ->
+#endif
             deriveForConstructor params typeName typeVars constructor
         DataD [] typeName typeVars constructors _deriving ->
-            concat <$> mapM (deriveForConstructor params typeName typeVars) constructors
+            fmap concat . forM constructors
+                $ deriveForConstructor params typeName typeVars
         x -> canNotDeriveError name x
 
     x -> canNotDeriveError name x
