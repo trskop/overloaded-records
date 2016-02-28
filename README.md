@@ -20,6 +20,38 @@ More about the current status of OverloadedRecordFields language extension can
 be found on [GHC Wiki: OverloadedRecordFields][]
 
 
+## Usage Example
+
+```Haskell
+{-# LANGUAGE DataKinds #-}              -- overloadedRecords, labels
+{-# LANGUAGE FlexibleContexts #-}       -- labels
+{-# LANGUAGE FlexibleInstances #-}      -- overloadedRecords
+{-# LANGUAGE MultiParamTypeClasses #-}  -- overloadedRecords
+{-# LANGUAGE TemplateHaskell #-}        -- overloadedRecords, labels
+{-# LANGUAGE TypeFamilies #-}           -- overloadedRecords
+module FooBar
+  where
+
+import Data.OverloadedRecords.TH (overloadedRecords)
+import Data.OverloadedLabels.TH (label, labels)
+import Data.Default.Class (Default(def))
+
+
+data Foo a = Foo
+    { _x :: Int
+    , _y :: a
+    }
+
+overloadedRecords def ''Foo
+labels ["x", "y"]
+
+newtype Bar a = Bar {_bar :: a}
+
+overloadedRecords def ''Bar
+label "bar"
+```
+
+
 ## License
 
 The BSD 3-Clause License, see [LICENSE][] file for details. This implementation
