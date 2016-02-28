@@ -10,5 +10,6 @@ packages:
 # acme-missiles-0.3).
 extra-deps: []
 
-# Override default flag values for local packages and extra-deps
-flags: {}
+# Override default flag values for local packages and extra-deps.
+flags:
+  overloaded-records: {pedantic: True}

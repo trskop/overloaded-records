@@ -13,11 +13,12 @@ description:
   See README for usage example.
 
 homepage:               https://github.com/trskop/overloaded-records
+bug-reports:            https://github.com/trskop/overloaded-records/issues
 license:                BSD3
 license-file:           LICENSE
 author:                 Peter Trško
 maintainer:             peter.trsko@gmail.com
-copyright:
+copyright:              (c) 2016, Peter Trško
 category:               Data
 build-type:             Simple
 cabal-version:          >=1.10
@@ -25,6 +26,11 @@ cabal-version:          >=1.10
 extra-source-files:
     ChangeLog.md
   , README.md
+
+flag pedantic
+  description:          Pass additional warning flags to GHC.
+  default:              False
+  manual:               True
 
 library
   hs-source-dirs:       src
@@ -65,3 +71,17 @@ library
     cpp-options:        -DHAVE_MONAD_FAIL
 
   ghc-options:          -Wall
+  if flag(pedantic)
+    ghc-options:
+      -fwarn-tabs
+      -fwarn-implicit-prelude
+--    -Werror
+
+source-repository head
+  type:                 git
+  location:             git://github.com/trskop/overloaded-records.git
+
+source-repository this
+  type:                 git
+  location:             git://github.com/trskop/overloaded-records.git
+  tag:                  0.1.0.0
