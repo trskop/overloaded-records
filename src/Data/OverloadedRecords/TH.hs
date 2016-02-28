@@ -7,11 +7,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
 
+#if 0
 #if HAVE_MONAD_FAIL && MIN_VERSION_template_haskell(2,11,0)
 #define _FAIL_IN_MONAD
 #else
 #define _FAIL_IN_MONAD , fail
 #endif
+#endif
+
+#define _FAIL_IN_MONAD , fail
 
 -- |
 -- Module:       $HEADER$
@@ -31,8 +35,10 @@ import Prelude (Num((-)), fromIntegral)
 
 import Control.Applicative (Applicative((<*>)))
 import Control.Monad (Monad((>>=) _FAIL_IN_MONAD, return), replicateM)
+#if 0
 #if HAVE_MONAD_FAIL && MIN_VERSION_template_haskell(2,11,0)
 import Control.Monad.Fail (MonadFail(fail))
+#endif
 #endif
 import Data.Bool (Bool(False), otherwise)
 import qualified Data.Char as Char (toLower)
@@ -228,8 +234,12 @@ deriveOverloadedRecords params = withReified $ \name -> \case
     errMessage n x =
         "`" <> show n <> "' is neither newtype nor data type: " <> show x
 
+-- | Derive magic instances for all fields of a specific data constructor of a
+-- specific type.
 deriveForConstructor
     :: DeriveOverloadedRecordsParams
+    -- ^ Parameters for customization of deriving process. Use 'def' to get
+    -- default behaviour.
     -> Name
     -> [TyVarBndr]
     -> Con
@@ -276,6 +286,7 @@ deriveForConstructor params name typeVars = \case
 
     withIndexes = List.zip [(0 :: Word) ..]
 
+-- | Parameters for 'deriveForField' function.
 data DeriveFieldParams = DeriveFieldParams
     { typeName :: Name
     -- ^ Record name, i.e. type constructor name.
@@ -298,10 +309,13 @@ data DeriveFieldParams = DeriveFieldParams
     -- ^ Type of the current data constructor argument.
     }
 
--- TODO: Create a data type for all the arguments.
+-- | Derive magic instances for a specific field of a specific type.
 deriveForField
     :: DeriveOverloadedRecordsParams
+    -- ^ Parameters for customization of deriving process. Use 'def' to get
+    -- default behaviour.
     -> DeriveFieldParams
+    -- ^ All the necessary information for derivation procedure.
     -> DecsQ
 deriveForField params DeriveFieldParams{..} =
     case possiblyLabel of
