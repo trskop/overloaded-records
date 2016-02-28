@@ -176,7 +176,7 @@ deriveOverloadedRecords params = withReified $ \name -> \case
     TyConI dec -> case dec of
         -- Not supporting DatatypeContexts, hence the [] required as the first
         -- argument to NewtypeD and DataD.
-#if MIN_VERSION_template_haskell(2,12,0)
+#if MIN_VERSION_template_haskell(2,11,0)
         NewtypeD [] typeName typeVars _kindSignature constructor _deriving ->
 #else
         NewtypeD [] typeName typeVars constructor _deriving ->
