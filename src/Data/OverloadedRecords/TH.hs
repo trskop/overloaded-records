@@ -1,11 +1,19 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+#ifdef HAVE_OVERLOADED_LABELS
+{-# LANGUAGE MagicHash #-}
+#endif
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 #if 0
 #if HAVE_MONAD_FAIL && MIN_VERSION_template_haskell(2,11,0)
@@ -26,19 +34,28 @@
 --
 -- Maintainer:   peter.trsko@gmail.com
 -- Stability:    experimental
--- Portability:  CPP, DeriveDataTypeable, DeriveGeneric, LambdaCase,
---               NoImplicitPrelude, RecordWildCards, TemplateHaskell,
---               TupleSections
+-- Portability:  CPP, DataKinds, DeriveDataTypeable, DeriveGeneric,
+--               FlexibleInstances, LambdaCase, MagicHash (GHC <8),
+--               MultiParamTypeClasses, NoImplicitPrelude, RecordWildCards,
+--               TemplateHaskell, TupleSections, TypeFamilies,
+--               TypeSynonymInstances
 --
 -- Derive magic instances for OverloadedRecordFields.
 module Data.OverloadedRecords.TH
     (
     -- * Derive OverloadedRecordFields instances
       overloadedRecords
+    , overloadedRecordsFor
+
+    -- ** Customize Derivation Process
     , DeriveOverloadedRecordsParams
-    , MakeAccessorName
-    , makeAccessorName
-    , defaultMakeAccessorName
+#ifdef HAVE_OVERLOADED_LABELS
+    , fieldDerivation
+#endif
+    , FieldDerivation
+    , OverloadedField(..)
+    , defaultFieldDerivation
+    , defaultMakeFieldName
     )
   where
 
@@ -64,13 +81,16 @@ import qualified Data.List as List
     , replicate
     , zip
     )
-import Data.Maybe (Maybe(Just, Nothing))
+import Data.Maybe (Maybe(Just, Nothing), fromMaybe)
 import Data.Monoid ((<>))
 import Data.String (String)
 import Data.Traversable (forM)
 import Data.Typeable (Typeable)
 import Data.Word (Word)
 import GHC.Generics (Generic)
+#ifdef HAVE_OVERLOADED_LABELS
+import GHC.Exts (Proxy#, proxy#)
+#endif
 import Text.Show (Show(show))
 
 import Language.Haskell.TH
@@ -107,6 +127,9 @@ import Language.Haskell.TH
 
 import Data.Default.Class (Default(def))
 
+#ifdef HAVE_OVERLOADED_LABELS
+import Data.OverloadedLabels (IsLabel(fromLabel))
+#endif
 import Data.OverloadedRecords
     ( FieldType
     , HasField(getField)
@@ -115,54 +138,86 @@ import Data.OverloadedRecords
     )
 
 
--- Parameters for customization of deriving process. Use 'def' to get
+#ifdef HAVE_OVERLOADED_LABELS
+-- | Overloaded label that can be used for accessing function of type
+-- 'FieldDerivation' from 'DeriveOverloadedRecordsParams'.
+fieldDerivation :: IsLabel "fieldDerivation" a => a
+fieldDerivation = fromLabel (proxy# :: Proxy# "fieldDerivation")
+#endif
+
+-- | Parameters for customization of deriving process. Use 'def' to get
 -- default behaviour.
 data DeriveOverloadedRecordsParams = DeriveOverloadedRecordsParams
-    { _strictAccessors :: Bool
+    { _strictFields :: Bool
     -- ^ Make setter and getter strict. **Currently unused.**
-    , _makeAccessorName :: MakeAccessorName
-    -- ^ See 'MakeAccessorName' for description.
+    , _fieldDerivation :: FieldDerivation
+    -- ^ See 'FieldDerivation' for description.
     }
   deriving (Generic, Typeable)
 
--- | Pseudo type definition:
+type instance FieldType "fieldDerivation" DeriveOverloadedRecordsParams =
+    FieldDerivation
+
+instance
+    HasField "fieldDerivation" DeriveOverloadedRecordsParams FieldDerivation
+  where
+    getField _proxy = _fieldDerivation
+
+type instance
+    UpdateType "fieldDerivation" DeriveOverloadedRecordsParams FieldDerivation =
+        DeriveOverloadedRecordsParams
+
+instance
+    SetField "fieldDerivation" DeriveOverloadedRecordsParams FieldDerivation
+  where
+    setField _proxy s b = s{_fieldDerivation = b}
+
+-- | Describes what should be the name of overloaded record field, and can also
+-- provide custom implementation of getter and setter.
+data OverloadedField
+    = GetterOnlyField String (Maybe ExpQ)
+    -- ^ Derive only getter instances. If second argument is 'Just', then it
+    -- contains custom definition of getter function.
+    | GetterAndSetterField String (Maybe (ExpQ, ExpQ))
+    -- ^ Derive only getter instances. If second argument is 'Just', then it
+    -- contains custom definitions of getter and setter functions,
+    -- respectively.
+  deriving (Generic, Typeable)
+
+-- | Type signature of a function that can customize the derivation of each
+-- individual overloaded record field.
 --
--- @
--- :: TypeName
--- -> ConstructorName
--- -> FieldIndex
--- -> Maybe AccessorName
--- -> Maybe OverloadedLabelName
--- @
---
--- If field has an accessor then the function will get its name or 'Nothing'
+-- If field has an selector then the function will get its name or 'Nothing'
 -- otherwise.  Function has to return 'Nothing' in case when generating
 -- overloaded record field instances is not desired.
---
--- @FieldIndex@ is starting from zero.
-type MakeAccessorName =
-    String -> String -> Word -> Maybe String -> Maybe String
-
--- | Lens for accessing function that specifies what magic instances will be
--- defined and what will be the names of overloaded record fields.
-makeAccessorName
-    :: Functor f
-    => (MakeAccessorName -> f MakeAccessorName)
-    -> DeriveOverloadedRecordsParams -> f DeriveOverloadedRecordsParams
-makeAccessorName f s@DeriveOverloadedRecordsParams{_makeAccessorName = a} =
-    (\b -> s{_makeAccessorName = b}) <$> f a
+type FieldDerivation
+    =  String
+    -- ^ Name of the type, of which this field is part of.
+    -> String
+    -- ^ Name of the constructor, of which this field is part of.
+    -> Word
+    -- ^ Field position as an argument of the constructor it is part of.
+    -- Indexing starts from zero.
+    -> Maybe String
+    -- ^ Name of the field (record) accessor; 'Nothing' means that there is no
+    -- record accessor defined for it.
+    -> Maybe OverloadedField
+    -- ^ Describes how overloaded record field should be generated for this
+    -- specific constructor field. 'Nothing' means that no overloaded record
+    -- field should be derived. See also 'OverloadedField' for details.
 
 -- | Suppose we have a weird type definition as this:
 --
 -- @
--- data SomeType = SomeConstructor
+-- data SomeType a b c = SomeConstructor
 --     { _fieldX :: a
 --     , someTypeFieldY :: b
 --     , someConstructorFieldZ :: c
+--     , anythingElse :: (a, b, c)
 --     }
 -- @
 --
--- Then for each of those fields, 'defaultMakeAccessorName' will produce
+-- Then for each of those fields, 'defaultMakeFieldName' will produce
 -- expected OverloadedLabel name:
 --
 -- * @_fieldX --> fieldX@
@@ -171,27 +226,29 @@ makeAccessorName f s@DeriveOverloadedRecordsParams{_makeAccessorName = a} =
 --
 -- * @someConstructorFieldZ --> fieldZ@
 --
--- Any other field name is kept unchanged.
-defaultMakeAccessorName
+-- * @anythingElse@ is ignored
+defaultMakeFieldName
     :: String
     -- ^ Name of the type, of which this field is part of.
     -> String
     -- ^ Name of the constructor, of which this field is part of.
     -> Word
     -- ^ Field position as an argument of the constructor it is part of.
+    -- Indexing starts from zero.
     -> Maybe String
     -- ^ Name of the field (record) accessor; 'Nothing' means that there is no
     -- record accessor defined for it.
     -> Maybe String
-    -- ^ Overloaded label name for the field; 'Nothing' means that there
-    -- shouldn't be a label associated with it.
-defaultMakeAccessorName typeName constructorName _fieldPosition = \case
+    -- ^ Overloaded record field name to be used for this specific constructor
+    -- field; 'Nothing' means that there shouldn't be a label associated with
+    -- it.
+defaultMakeFieldName typeName constructorName _fieldPosition = \case
     Nothing -> Nothing
     Just fieldName
       | startsWith "_"               -> Just $ dropPrefix "_"        fieldName
       | startsWith typePrefix        -> Just $ dropPrefix typePrefix fieldName
       | startsWith constructorPrefix -> Just $ dropPrefix typePrefix fieldName
-      | otherwise                    -> Just fieldName
+      | otherwise                    -> Nothing
       where
         startsWith :: String -> Bool
         startsWith = (`List.isPrefixOf` fieldName)
@@ -205,17 +262,22 @@ defaultMakeAccessorName typeName constructorName _fieldPosition = \case
         typePrefix = headToLower typeName
         constructorPrefix = headToLower constructorName
 
+-- | Function used by default value of 'DeriveOverloadedRecordsParams'.
+defaultFieldDerivation :: FieldDerivation
+defaultFieldDerivation =
+    (((fmap (`GetterAndSetterField` Nothing) .) .) .) . defaultMakeFieldName
+
 -- |
 -- @
 -- 'def' = 'DeriveOverloadedRecordsParams'
---     { strictAccessors = 'False'
---     , 'makeAccessorName' = 'defaultMakeAccessorName'
+--     { strictFields = 'False'
+--     , 'fieldDerivation' = 'defaultFieldDerivation'
 --     }
 -- @
 instance Default DeriveOverloadedRecordsParams where
     def = DeriveOverloadedRecordsParams
-        { _strictAccessors = False
-        , _makeAccessorName = defaultMakeAccessorName
+        { _strictFields = False
+        , _fieldDerivation = defaultFieldDerivation
         }
 
 -- | Derive magic OverloadedRecordFields instances for specified type name.
@@ -256,6 +318,35 @@ overloadedRecords params = withReified $ \name -> \case
     errMessage :: Show a => Name -> a -> String
     errMessage n x =
         "`" <> show n <> "' is neither newtype nor data type: " <> show x
+
+-- | Derive magic OverloadedRecordFields instances for specified type name.
+--
+-- Similar to 'overloadedRecords', but instead of
+-- 'DeriveOverloadedRecordsParams' value it takes function which can modify its
+-- default value.
+--
+-- @
+-- data Coordinates2D a
+--     { coordinateX :: a
+--     , coordinateY :: a
+--     }
+--
+-- 'overloadedRecordsFor' ''Coordinates2D
+--     $ \#fieldDerivation .~ \\_ _ _ -> \\case
+--         Nothing -> Nothing
+--         Just field -> lookup field
+--            [ (\"coordinateX\", 'GetterOnlyField' \"x\" Nothing)
+--            , (\"coordinateY\", 'GetterOnlyField' \"y\" Nothing)
+--            ]
+-- @
+overloadedRecordsFor
+    :: Name
+    -- ^ Name of the type for which magic instances should be derived.
+    -> (DeriveOverloadedRecordsParams -> DeriveOverloadedRecordsParams)
+    -- ^ Function that modifies parameters for customization of deriving
+    -- process.
+    -> DecsQ
+overloadedRecordsFor typeName f = overloadedRecords (f def) typeName
 
 -- | Derive magic instances for all fields of a specific data constructor of a
 -- specific type.
@@ -343,15 +434,28 @@ deriveForField
 deriveForField params DeriveFieldParams{..} =
     case possiblyLabel of
         Nothing -> return []
-        Just label -> (<>)
-            <$> deriveGetter labelType recordType (return fieldType) getterExpr
-            <*> deriveSetter labelType recordType (return fieldType) newRecordType
-                    newFieldType setterExpr
+        Just (GetterOnlyField label customGetterExpr) ->
+            deriveGetter' (strTyLitT label)
+                $ fromMaybe derivedGetterExpr customGetterExpr
+        Just (GetterAndSetterField label customGetterAndSetterExpr) -> (<>)
+            <$> deriveGetter' labelType getterExpr
+            <*> deriveSetter' labelType setterExpr
           where
             labelType = strTyLitT label
+
+            (getterExpr, setterExpr) =
+                fromMaybe (derivedGetterExpr, derivedSetterExpr)
+                    customGetterAndSetterExpr
   where
-    possiblyLabel = _makeAccessorName params (nameBase typeName)
+    possiblyLabel = _fieldDerivation params (nameBase typeName)
         (nameBase constructorName) currentIndex (fmap nameBase accessorName)
+
+    deriveGetter' labelType =
+        deriveGetter labelType recordType (return fieldType)
+
+    deriveSetter' labelType =
+        deriveSetter labelType recordType (return fieldType) newRecordType
+            newFieldType
 
     recordType = foldl appT (conT typeName) $ List.map varT typeVariables
 
@@ -366,7 +470,7 @@ deriveForField params DeriveFieldParams{..} =
     inbetween :: (a -> [b]) -> a -> a -> b -> [b]
     inbetween f a1 a2 b = f a1 <> (b : f a2)
 
-    getterExpr = case accessorName of
+    derivedGetterExpr = case accessorName of
         Just name -> varE name
         Nothing -> do
             a <- newName "a"
@@ -376,7 +480,7 @@ deriveForField params DeriveFieldParams{..} =
         nthArg :: Pat -> [Pat]
         nthArg = inbetween wildPs currentIndex numVarsOnRight
 
-    setterExpr = case accessorName of
+    derivedSetterExpr = case accessorName of
         Just name -> do
             s <- newName "s"
             b <- newName "b"
