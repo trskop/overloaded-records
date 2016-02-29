@@ -56,6 +56,13 @@ module Data.OverloadedRecords.TH
     , OverloadedField(..)
     , defaultFieldDerivation
     , defaultMakeFieldName
+
+    -- * Low-level Deriving Mechanism
+    , field
+    , simpleField
+    , fieldGetter
+    , fieldSetter
+    , simpleFieldSetter
     )
   where
 
@@ -501,6 +508,59 @@ deriveForField params DeriveFieldParams{..} =
             constrExpression before b after = foldl appE (conE constructorName)
                 $ varEs before <> (b : varEs after)
 
+-- | Derive instances for overloaded record field, both getter and setter.
+field
+    :: String
+    -- ^ Overloaded label name.
+    -> TypeQ
+    -- ^ Record type.
+    -> TypeQ
+    -- ^ Field type.
+    -> TypeQ
+    -- ^ Record type after update.
+    -> TypeQ
+    -- ^ Setter will set field to a value of this type.
+    -> ExpQ
+    -- ^ Getter function.
+    -> ExpQ
+    -- ^ Setter function.
+    -> DecsQ
+field label recType fldType newRecType newFldType getterExpr setterExpr = (<>)
+    <$> deriveGetter labelType recType fldType getterExpr
+    <*> deriveSetter labelType recType fldType newRecType newFldType setterExpr
+  where
+    labelType = strTyLitT label
+
+-- | Derive instances for overloaded record field, both getter and setter. Same
+-- as 'field', but record type is the same before and after update and so is
+-- the field type.
+simpleField
+    :: String
+    -- ^ Overloaded label name.
+    -> TypeQ
+    -- ^ Record type.
+    -> TypeQ
+    -- ^ Field type.
+    -> ExpQ
+    -- ^ Getter function.
+    -> ExpQ
+    -- ^ Setter function.
+    -> DecsQ
+simpleField label recType fldType = field label recType fldType recType fldType
+
+-- | Derive instances for overloaded record field getter.
+fieldGetter
+    :: String
+    -- ^ Overloaded label name.
+    -> TypeQ
+    -- ^ Record type.
+    -> TypeQ
+    -- ^ Field type
+    -> ExpQ
+    -- ^ Getter function.
+    -> DecsQ
+fieldGetter = deriveGetter . strTyLitT
+
 -- | Derive only getter related instances.
 deriveGetter :: TypeQ -> TypeQ -> TypeQ -> ExpQ -> DecsQ
 deriveGetter labelType recordType fieldType getter =
@@ -509,6 +569,39 @@ deriveGetter labelType recordType fieldType getter =
         instance HasField $(labelType) $(recordType) $(fieldType) where
             getField _proxy = $(getter)
     |]
+
+-- | Derive instances for overloaded record field setter. Same as
+-- 'fieldSetter', but record type is the same before and after update and so is
+-- the field type.
+simpleFieldSetter
+    :: String
+    -- ^ Overloaded label name.
+    -> TypeQ
+    -- ^ Record type.
+    -> TypeQ
+    -- ^ Field type.
+    -> ExpQ
+    -- ^ Setter function.
+    -> DecsQ
+simpleFieldSetter label recordType fieldType =
+    fieldSetter label recordType fieldType recordType fieldType
+
+-- | Derive instances for overloaded record field setter.
+fieldSetter
+    :: String
+    -- ^ Overloaded label name.
+    -> TypeQ
+    -- ^ Record type.
+    -> TypeQ
+    -- ^ Field type.
+    -> TypeQ
+    -- ^ Record type after update.
+    -> TypeQ
+    -- ^ Setter will set field to a value of this type.
+    -> ExpQ
+    -- ^ Setter function.
+    -> DecsQ
+fieldSetter = deriveSetter . strTyLitT
 
 -- | Derive only setter related instances.
 deriveSetter :: TypeQ -> TypeQ -> TypeQ -> TypeQ -> TypeQ -> ExpQ -> DecsQ
