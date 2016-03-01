@@ -44,7 +44,10 @@
 module Data.OverloadedRecords.TH
     (
     -- * Derive OverloadedRecordFields instances
-      overloadedRecords
+      overloadedRecord
+    , overloadedRecordFor
+
+    , overloadedRecords
     , overloadedRecordsFor
 
     -- ** Customize Derivation Process
@@ -91,7 +94,7 @@ import qualified Data.List as List
 import Data.Maybe (Maybe(Just, Nothing), fromMaybe)
 import Data.Monoid ((<>))
 import Data.String (String)
-import Data.Traversable (forM)
+import Data.Traversable (forM, mapM)
 import Data.Typeable (Typeable)
 import Data.Word (Word)
 import GHC.Generics (Generic)
@@ -288,14 +291,14 @@ instance Default DeriveOverloadedRecordsParams where
         }
 
 -- | Derive magic OverloadedRecordFields instances for specified type name.
-overloadedRecords
+overloadedRecord
     :: DeriveOverloadedRecordsParams
     -- ^ Parameters for customization of deriving process. Use 'def' to get
     -- default behaviour.
     -> Name
     -- ^ Name of the type for which magic instances should be derived.
     -> DecsQ
-overloadedRecords params = withReified $ \name -> \case
+overloadedRecord params = withReified $ \name -> \case
     TyConI dec -> case dec of
         -- Not supporting DatatypeContexts, hence the [] required as the first
         -- argument to NewtypeD and DataD.
@@ -327,6 +330,16 @@ overloadedRecords params = withReified $ \name -> \case
         "`" <> show n <> "' is neither newtype nor data type: " <> show x
 
 -- | Derive magic OverloadedRecordFields instances for specified type name.
+overloadedRecords
+    :: DeriveOverloadedRecordsParams
+    -- ^ Parameters for customization of deriving process. Use 'def' to get
+    -- default behaviour.
+    -> [Name]
+    -- ^ Names of the types for which magic instances should be derived.
+    -> DecsQ
+overloadedRecords params = fmap concat . mapM (overloadedRecord params)
+
+-- | Derive magic OverloadedRecordFields instances for specified type name.
 --
 -- Similar to 'overloadedRecords', but instead of
 -- 'DeriveOverloadedRecordsParams' value it takes function which can modify its
@@ -346,14 +359,23 @@ overloadedRecords params = withReified $ \name -> \case
 --            , (\"coordinateY\", 'GetterOnlyField' \"y\" Nothing)
 --            ]
 -- @
-overloadedRecordsFor
+overloadedRecordFor
     :: Name
     -- ^ Name of the type for which magic instances should be derived.
     -> (DeriveOverloadedRecordsParams -> DeriveOverloadedRecordsParams)
     -- ^ Function that modifies parameters for customization of deriving
     -- process.
     -> DecsQ
-overloadedRecordsFor typeName f = overloadedRecords (f def) typeName
+overloadedRecordFor typeName f = overloadedRecord (f def) typeName
+
+overloadedRecordsFor
+    :: [Name]
+    -- ^ Names of the types for which magic instances should be derived.
+    -> (DeriveOverloadedRecordsParams -> DeriveOverloadedRecordsParams)
+    -- ^ Function that modifies parameters for customization of deriving
+    -- process.
+    -> DecsQ
+overloadedRecordsFor typeNames f = overloadedRecords (f def) typeNames
 
 -- | Derive magic instances for all fields of a specific data constructor of a
 -- specific type.
@@ -377,6 +399,13 @@ deriveForConstructor params name typeVars = \case
     InfixC arg0 constructorName arg1 ->
         deriveFor constructorName [arg0, arg1] $ \(strict, argType) f ->
             f Nothing strict argType
+
+#if 0
+#if MIN_VERSION_template_haskell(2,11,0)
+    GadtC _ _ _ ->
+    RecGadtC _ _ _ ->
+#endif
+#endif
 
     -- Existentials aren't supported.
     ForallC _typeVariables _context _constructor -> return []

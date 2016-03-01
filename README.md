@@ -17,11 +17,11 @@ instancess for `HasField` and `SetField` type classes. With these instances
 overloaded fields can be used directly as getters and lenses.
 
 ```Haskell
-import Data.OverloadedRecords.TH (overloadedRecords)
+import Data.OverloadedRecords.TH (overloadedRecord)
 
 newtype Bar a = Bar {_bar :: a}
 
-overloadedRecords def ''Bar
+overloadedRecord def ''Bar
 ```
 
 On GHC 8.0.1 it is possible to just write:
@@ -57,18 +57,18 @@ be found on [GHC Wiki: OverloadedRecordFields][].
 ## Usage Example
 
 ```Haskell
-{-# LANGUAGE DataKinds #-}              -- overloadedRecords, labels
+{-# LANGUAGE DataKinds #-}              -- overloadedRecord, labels
 {-# LANGUAGE FlexibleContexts #-}       -- labels
-{-# LANGUAGE FlexibleInstances #-}      -- overloadedRecords
-{-# LANGUAGE MultiParamTypeClasses #-}  -- overloadedRecords
-{-# LANGUAGE TemplateHaskell #-}        -- overloadedRecords, labels
-{-# LANGUAGE TypeFamilies #-}           -- overloadedRecords
+{-# LANGUAGE FlexibleInstances #-}      -- overloadedRecord
+{-# LANGUAGE MultiParamTypeClasses #-}  -- overloadedRecord
+{-# LANGUAGE TemplateHaskell #-}        -- overloadedRecord, labels
+{-# LANGUAGE TypeFamilies #-}           -- overloadedRecord
 module FooBar
   where
 
 import Data.Default.Class (Default(def))
 
-import Data.OverloadedRecords.TH (overloadedRecords)
+import Data.OverloadedRecords.TH (overloadedRecord)
 import Data.OverloadedLabels.TH (label, labels)
 
 
@@ -77,12 +77,12 @@ data Foo a = Foo
     , _y :: a
     }
 
-overloadedRecords def ''Foo
+overloadedRecord def ''Foo
 labels ["x", "y"]
 
 newtype Bar a = Bar {_bar :: a}
 
-overloadedRecords def ''Bar
+overloadedRecord def ''Bar
 label "bar"
 ```
 
