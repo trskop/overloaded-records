@@ -10,7 +10,43 @@
 
 ## Description
 
-Implementation of /Overloaded Records/ based on current GHC proposal.
+Implementation of /Overloaded Record Fields/ based on current GHC proposal and
+builds on top of already implemented functionality. Most importantly, this
+library provides Template Haskell functions for automatic deriving of
+instancess for `HasField` and `SetField` type classes. With these instances
+overloaded fields can be used directly as getters and lenses.
+
+```Haskell
+import Data.OverloadedRecords.TH (overloadedRecords)
+
+newtype Bar a = Bar {_bar :: a}
+
+overloadedRecords def ''Bar
+```
+
+On GHC 8.0.1 it is possible to just write:
+
+```Haskell
+{-# LANGUAGE OverloadedLabels #-}
+
+import Control.Lens ((+~))
+
+add :: Int -> Bar Int -> Bar Int
+add n = #bar +~ n
+```
+
+For older GHC versions there is a family of Template Haskell functions that
+will derive overloaded labels in form of standard haskell definitions:
+
+```Haskell
+import Control.Lens ((+~))
+import Data.OverloadedLabels.TH (label)
+
+label "bar"
+
+add :: Int -> Bar Int -> Bar Int
+add n = bar +~ n
+```
 
 This implementation is highly experimental and may change rapidly.
 
