@@ -4,9 +4,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
-#ifdef HAVE_OVERLOADED_LABELS
-{-# LANGUAGE MagicHash #-}
-#endif
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -14,6 +11,11 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+
+#ifndef HAVE_OVERLOADED_LABELS
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MagicHash #-}
+#endif
 
 #if 0
 #if HAVE_MONAD_FAIL && MIN_VERSION_template_haskell(2,11,0)
@@ -35,9 +37,9 @@
 -- Maintainer:   peter.trsko@gmail.com
 -- Stability:    experimental
 -- Portability:  CPP, DataKinds, DeriveDataTypeable, DeriveGeneric,
---               FlexibleInstances, LambdaCase, MagicHash (GHC <8),
---               MultiParamTypeClasses, NoImplicitPrelude, RecordWildCards,
---               TemplateHaskell, TupleSections, TypeFamilies,
+--               FlexibleContexts (GHC <8), FlexibleInstances, LambdaCase,
+--               MagicHash (GHC <8), MultiParamTypeClasses, NoImplicitPrelude,
+--               RecordWildCards, TemplateHaskell, TupleSections, TypeFamilies,
 --               TypeSynonymInstances
 --
 -- Derive magic instances for OverloadedRecordFields.
@@ -51,7 +53,7 @@ module Data.OverloadedRecords.TH
 
     -- ** Customize Derivation Process
     , DeriveOverloadedRecordsParams
-#ifdef HAVE_OVERLOADED_LABELS
+#ifndef HAVE_OVERLOADED_LABELS
     , fieldDerivation
 #endif
     , FieldDerivation
@@ -97,7 +99,7 @@ import Data.Traversable (forM, mapM)
 import Data.Typeable (Typeable)
 import Data.Word (Word)
 import GHC.Generics (Generic)
-#ifdef HAVE_OVERLOADED_LABELS
+#ifndef HAVE_OVERLOADED_LABELS
 import GHC.Exts (Proxy#, proxy#)
 #endif
 import Text.Show (Show(show))
@@ -136,7 +138,7 @@ import Language.Haskell.TH
 
 import Data.Default.Class (Default(def))
 
-#ifdef HAVE_OVERLOADED_LABELS
+#ifndef HAVE_OVERLOADED_LABELS
 import Data.OverloadedLabels (IsLabel(fromLabel))
 #endif
 import Data.OverloadedRecords
@@ -147,7 +149,7 @@ import Data.OverloadedRecords
     )
 
 
-#ifdef HAVE_OVERLOADED_LABELS
+#ifndef HAVE_OVERLOADED_LABELS
 -- | Overloaded label that can be used for accessing function of type
 -- 'FieldDerivation' from 'DeriveOverloadedRecordsParams'.
 fieldDerivation :: IsLabel "fieldDerivation" a => a

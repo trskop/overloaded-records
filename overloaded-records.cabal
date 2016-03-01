@@ -1,9 +1,9 @@
 name:                   overloaded-records
-version:                0.1.0.0
+version:                0.2.0.0
 synopsis:               Overloaded Records based on current GHC proposal.
 description:
   Implementation of /Overloaded Record Fields/ based on current GHC proposal.
-  It is built on top of functionality that is included in GHC 8.01, but it
+  It is built on top of functionality that is included in GHC 8.0.1, but it
   works on older GHC versions as well. Most importantly, this library provides
   Template Haskell functions for automatic deriving of instancess for
   @HasField@ and @SetField@ type classes. With these instances overloaded
@@ -89,4 +89,4 @@ source-repository head
 source-repository this
   type:                 git
   location:             git://github.com/trskop/overloaded-records.git
-  tag:                  0.1.0.0
+  tag:                  0.2.0.0
