@@ -10,7 +10,7 @@
 
 ## Description
 
-Implementation of /Overloaded Record Fields/ based on current GHC proposal and
+Implementation of *Overloaded Record Fields* based on current GHC proposal and
 builds on top of already implemented functionality. Most importantly, this
 library provides Template Haskell functions for automatic deriving of
 instancess for `HasField` and `SetField` type classes. With these instances
