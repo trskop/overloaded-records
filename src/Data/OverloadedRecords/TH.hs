@@ -45,9 +45,8 @@ module Data.OverloadedRecords.TH
     (
     -- * Derive OverloadedRecordFields instances
       overloadedRecord
-    , overloadedRecordFor
-
     , overloadedRecords
+    , overloadedRecordFor
     , overloadedRecordsFor
 
     -- ** Customize Derivation Process
@@ -290,7 +289,7 @@ instance Default DeriveOverloadedRecordsParams where
         , _fieldDerivation = defaultFieldDerivation
         }
 
--- | Derive magic OverloadedRecordFields instances for specified type name.
+-- | Derive magic OverloadedRecordFields instances for specified type.
 overloadedRecord
     :: DeriveOverloadedRecordsParams
     -- ^ Parameters for customization of deriving process. Use 'def' to get
@@ -329,7 +328,7 @@ overloadedRecord params = withReified $ \name -> \case
     errMessage n x =
         "`" <> show n <> "' is neither newtype nor data type: " <> show x
 
--- | Derive magic OverloadedRecordFields instances for specified type name.
+-- | Derive magic OverloadedRecordFields instances for specified types.
 overloadedRecords
     :: DeriveOverloadedRecordsParams
     -- ^ Parameters for customization of deriving process. Use 'def' to get
@@ -339,7 +338,7 @@ overloadedRecords
     -> DecsQ
 overloadedRecords params = fmap concat . mapM (overloadedRecord params)
 
--- | Derive magic OverloadedRecordFields instances for specified type name.
+-- | Derive magic OverloadedRecordFields instances for specified type.
 --
 -- Similar to 'overloadedRecords', but instead of
 -- 'DeriveOverloadedRecordsParams' value it takes function which can modify its
@@ -368,6 +367,7 @@ overloadedRecordFor
     -> DecsQ
 overloadedRecordFor typeName f = overloadedRecord (f def) typeName
 
+-- | Derive magic OverloadedRecordFields instances for specified types.
 overloadedRecordsFor
     :: [Name]
     -- ^ Names of the types for which magic instances should be derived.
