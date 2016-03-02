@@ -77,6 +77,66 @@ library
       -DHAVE_MONAD_FAIL
       -DHAVE_OVERLOADED_LABELS
 
+  ghc-options:          -Wall
+  if flag(pedantic)
+    ghc-options:
+      -fwarn-tabs
+      -fwarn-implicit-prelude
+--    -Werror
+
+test-suite unit-tests
+  hs-source-dirs:       src, test
+  type:                 exitcode-stdio-1.0
+  main-is:              unit-tests.hs
+  other-modules:
+      Data.OverloadedLabels
+    , Data.OverloadedLabels.TH
+    , Data.OverloadedRecords
+    , Data.OverloadedRecords.TH
+    , TestCase
+    , TestCase.Data.OverloadedRecords
+
+  default-language:     Haskell2010
+  other-extensions:
+      CPP
+    , DataKinds
+    , DeriveDataTypeable
+    , DeriveGeneric
+    , ExplicitForAll
+    , FlexibleContexts
+    , FlexibleInstances
+    , FunctionalDependencies
+    , KindSignatures
+    , LambdaCase
+    , MagicHash
+    , MultiParamTypeClasses
+    , NoImplicitPrelude
+    , RecordWildCards
+    , TemplateHaskell
+    , TupleSections
+    , TypeFamilies
+    , UndecidableInstances
+
+  build-depends:
+      base >=4.7 && <5
+    , data-default-class ==0.0.*
+    , template-haskell >=2.9 && <2.12
+
+    -- {{{ Test-suite dependencies --------------------------------------------
+    , HUnit >=1.2 && <2
+      -- ^ Same constraints as test-framework-hunit
+      -- ^ Same constraints as test-framework-quickcheck2==0.3.0.3.
+    , test-framework >=0.8 && <1
+      -- ^ Same constraint as test-framework-skip, other packages that
+      -- depend on it have less restrictive bounds.
+    , test-framework-hunit >=0.2.6 && <1
+      -- ^ Lower versions have more restrictive bounds on test-framework.
+    -- }}} Test-suite dependencies --------------------------------------------
+
+  if impl(ghc >=8.0)
+    cpp-options:
+      -DHAVE_MONAD_FAIL
+      -DHAVE_OVERLOADED_LABELS
 
   ghc-options:          -Wall
   if flag(pedantic)
