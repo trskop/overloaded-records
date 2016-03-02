@@ -36,6 +36,7 @@ script:
   # Option -fpedantic turns on additional wornings in addition to -Wall.
   - cabal configure -fpedantic
   - cabal build
+  - cabal test
 
   # Following line tests if sdist package is created correctly.
   - cabal sdist | sed -rn '$s/^[^:]+:\s+//p' | xargs cabal install
