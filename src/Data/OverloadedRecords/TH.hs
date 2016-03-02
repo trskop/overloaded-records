@@ -258,22 +258,24 @@ defaultMakeFieldName
 defaultMakeFieldName typeName constructorName _fieldPosition = \case
     Nothing -> Nothing
     Just fieldName
-      | startsWith "_"               -> Just $ dropPrefix "_"        fieldName
-      | startsWith typePrefix        -> Just $ dropPrefix typePrefix fieldName
-      | startsWith constructorPrefix -> Just $ dropPrefix typePrefix fieldName
-      | otherwise                    -> Nothing
+      | startsWith "_"        -> Just $ dropPrefix "_"        fieldName
+      | startsWith typePrefix -> Just $ dropPrefix typePrefix fieldName
+      | startsWith conPrefix  -> Just $ dropPrefix conPrefix  fieldName
+      | otherwise             -> Nothing
       where
         startsWith :: String -> Bool
         startsWith = (`List.isPrefixOf` fieldName)
 
         dropPrefix :: String -> String -> String
-        dropPrefix s = List.drop (List.length s)
+        dropPrefix s = headToLower . List.drop (List.length s)
 
+        headToLower :: String -> String
         headToLower "" = ""
         headToLower (x : xs) = Char.toLower x : xs
 
+        typePrefix, conPrefix :: String
         typePrefix = headToLower typeName
-        constructorPrefix = headToLower constructorName
+        conPrefix = headToLower constructorName
 
 -- | Function used by default value of 'DeriveOverloadedRecordsParams'.
 defaultFieldDerivation :: FieldDerivation
