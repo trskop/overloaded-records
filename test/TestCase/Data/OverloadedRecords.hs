@@ -18,7 +18,7 @@ module TestCase.Data.OverloadedRecords (tests)
 
 import Data.Bool (Bool(False, True))
 import Data.Eq (Eq)
-import Data.Function (($), (&), (.), const)
+import Data.Function (($), (.), const, flip)
 import Data.Functor.Identity (Identity(Identity, runIdentity))
 import Data.Int (Int)
 import Data.List (map)
@@ -86,3 +86,9 @@ tests =
 
     (.~) :: ((a -> Identity b) -> s -> Identity t) -> b -> s -> t
     (.~) l b = runIdentity . l (const $ Identity b)
+
+    -- Data.Function constains (&) since base 4.8.0.0, which was bundled with
+    -- GHC 7.10, but we are supporting also GHC 7.8.
+    (&) :: a -> (a -> b) -> b
+    (&) = flip ($)
+    infixl 1 &
