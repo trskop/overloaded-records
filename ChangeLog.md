@@ -1,6 +1,18 @@
 # ChangeLog / ReleaseNotes
 
 
+## Version 0.3.0.0
+
+* Fixed defaultMakeFieldName, which actually behaved correctly only in very few
+  cases. (**bug fix**)
+* Added missing `HAVE_OVERLOADED_LABELS` macro, that actually allows us to use
+  GHC's `IsLabel` on GHC >8. (**bug fix**)
+* Exposing previously hidden `FromArrow` and `IsFieldAccessor`. (**change**)
+* Few simple unit tests. (**new**)
+* Uploaded to [Hackage][]:
+  <http://hackage.haskell.org/package/overloaded-records-0.3.0.0>
+
+
 ## Version 0.2.0.0
 
 * Function `overloadedRecords` renamed to `overloadedRecord`. There is also new
