@@ -133,6 +133,12 @@ test-suite unit-tests
       -- ^ Lower versions have more restrictive bounds on test-framework.
     -- }}} Test-suite dependencies --------------------------------------------
 
+  if impl(ghc <7.10)
+    -- Identity functor is available in base bundled with GHC >=7.10, for older
+    -- we need to get it elsewhere.
+    build-depends:
+      transformers >=2
+
   if impl(ghc >=8.0)
     cpp-options:
       -DHAVE_MONAD_FAIL
