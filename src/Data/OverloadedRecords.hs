@@ -31,13 +31,20 @@ module Data.OverloadedRecords
       module Data.OverloadedLabels
 
     -- * Overloaded Record Fields
+    --
+    -- ** Getter
     , FieldType
     , HasField(..)
 
+    -- ** Setter
     , UpdateType
     , SetField(..)
     , Setter
     , set
+
+    -- ** IsLabel For Getter and Lens
+    , FromArrow
+    , IsFieldAccessor(..)
     )
   where
 
