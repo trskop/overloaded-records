@@ -152,6 +152,8 @@ import Data.OverloadedRecords
 #ifndef HAVE_OVERLOADED_LABELS
 -- | Overloaded label that can be used for accessing function of type
 -- 'FieldDerivation' from 'DeriveOverloadedRecordsParams'.
+--
+-- This definition is available only if compiled with GHC <8.
 fieldDerivation :: IsLabel "fieldDerivation" a => a
 fieldDerivation = fromLabel (proxy# :: Proxy# "fieldDerivation")
 #endif

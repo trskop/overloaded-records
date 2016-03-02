@@ -83,6 +83,7 @@ type family FromArrow (a :: *) :: Bool where
     FromArrow (x -> y) = 'True
     FromArrow t        = 'False
 
+-- | Distinguish between getter and lens.
 class
     ( z ~ FromArrow x
     ) => IsFieldAccessor (l :: Symbol) x y (z :: Bool) | l y -> x
@@ -92,7 +93,11 @@ class
 instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
     fromLabel = fieldAccessor
 
--- | @'Functor' f => 'Proxy#' l -> (a -> f b) -> s -> f t@
+-- | Overloaded lens:
+--
+-- @
+-- 'Functor' f => 'Proxy#' l -> (a -> f b) -> s -> f t
+-- @
 instance
     ( Functor f
     , HasField l s a
@@ -103,7 +108,11 @@ instance
   where
     fieldAccessor proxy f s = setField proxy s <$> f (getField proxy s)
 
--- | @'Proxy#' l -> r -> a@
+-- | Overloaded getter:
+--
+-- @
+-- 'Proxy#' l -> r -> a
+-- @
 instance
     ( HasField l s a
     , FieldType l s ~ a
@@ -112,8 +121,25 @@ instance
   where
     fieldAccessor = getField
 
+-- | Wrapper for a set function, lens naming convention is used for type
+-- variables. Its instance for 'IsLabel' forces overloaded label to behave as a
+-- setter.
 newtype Setter s t b = Setter (s -> b -> t)
 
+-- | Extract set function from 'Setter'. Using 'Setter' instance for 'IsLabel'
+-- forces overloaded label to behave as a setter.
+--
+-- Usage example:
+--
+-- @
+-- newtype Bar a = Bar {_bar :: a}
+--   deriving Show
+--
+-- overloadedRecord ''Bar
+-- @
+--
+-- >>> set bar (Bar (Just False)) Nothing
+-- Bar {_bar = Nothing}
 set :: Setter s t b -> s -> b -> t
 set (Setter f) = f
 
