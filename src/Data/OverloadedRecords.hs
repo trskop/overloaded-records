@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -16,9 +18,10 @@
 --
 -- Maintainer:   peter.trsko@gmail.com
 -- Stability:    experimental
--- Portability:  DataKinds, FlexibleInstances, FunctionalDependencies,
---               MagicHash, MultiParamTypeClasses, NoImplicitPrelude,
---               TypeFamilies, UndecidableInstances
+-- Portability:  DataKinds, DeriveDataTypeable, DeriveGeneric,
+--               FlexibleInstances, FunctionalDependencies, MagicHash,
+--               MultiParamTypeClasses, NoImplicitPrelude, TypeFamilies,
+--               UndecidableInstances
 --
 -- Magic classes for OverloadedRecordFields.
 --
@@ -36,11 +39,15 @@ module Data.OverloadedRecords
     , FieldType
     , HasField(..)
 
-    -- ** Setter
+    -- ** Setter and Modifier
     , UpdateType
-    , SetField(..)
+    , ModifyField(..)
+
     , Setter
     , set
+
+    , Modifier
+    , modify
 
     -- ** IsLabel For Getter and Lens
     , FromArrow
@@ -49,9 +56,12 @@ module Data.OverloadedRecords
   where
 
 import Data.Bool (Bool(False, True))
+import Data.Function (const)
 import Data.Functor (Functor, (<$>))
-import GHC.TypeLits (Symbol)
+import Data.Typeable (Typeable)
 import GHC.Exts (Proxy#)
+import GHC.Generics (Generic)
+import GHC.TypeLits (Symbol)
 
 import Data.OverloadedLabels
 
@@ -70,13 +80,16 @@ class HasField (l :: Symbol) s a | l s -> a where
     -- | Get value of a field.
     getField :: Proxy# l -> s -> a
 
-class
-    ( HasField l s b
-    , FieldType l s ~ b
-    ) => SetField l s b
+class (HasField l s a) => ModifyField (l :: Symbol) s t a b
+    | l s -> a, l t -> b, l s b -> t, t -> s
   where
-    -- | Set value of a field.
-    setField :: Proxy# l -> s -> b -> UpdateType l s b
+    {-# MINIMAL modifyField | setField #-}
+
+    modifyField :: Proxy# l -> (a -> b) -> s -> t
+    modifyField proxy f s = setField proxy s (f (getField proxy s))
+
+    setField :: Proxy# l -> s -> b -> t
+    setField proxy s b = modifyField proxy (const b) s
 
 -- | Returns 'True' if type @a@ is a function.
 type family FromArrow (a :: *) :: Bool where
@@ -90,9 +103,6 @@ class
   where
     fieldAccessor :: Proxy# l -> x -> y
 
-instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
-    fromLabel = fieldAccessor
-
 -- | Overloaded lens:
 --
 -- @
@@ -100,10 +110,7 @@ instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
 -- @
 instance
     ( Functor f
-    , HasField l s a
-    , SetField l s b
-    , FieldType l s ~ a
-    , UpdateType l s b ~ t
+    , ModifyField l s t a b
     ) => IsFieldAccessor l (a -> f b) (s -> f t) 'True
   where
     fieldAccessor proxy f s = setField proxy s <$> f (getField proxy s)
@@ -115,16 +122,22 @@ instance
 -- @
 instance
     ( HasField l s a
-    , FieldType l s ~ a
+--  , FieldType l s ~ a
     , FromArrow s ~ 'False
     ) => IsFieldAccessor l s a 'False
   where
     fieldAccessor = getField
 
+instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
+    fromLabel = fieldAccessor
+
+-- {{{ Setter -----------------------------------------------------------------
+
 -- | Wrapper for a set function, lens naming convention is used for type
 -- variables. Its instance for 'IsLabel' forces overloaded label to behave as a
 -- setter.
 newtype Setter s t b = Setter (s -> b -> t)
+  deriving (Generic, Typeable)
 
 -- | Extract set function from 'Setter'. Using 'Setter' instance for 'IsLabel'
 -- forces overloaded label to behave as a setter.
@@ -143,9 +156,20 @@ newtype Setter s t b = Setter (s -> b -> t)
 set :: Setter s t b -> s -> b -> t
 set (Setter f) = f
 
-instance
-    ( SetField l s b
-    , UpdateType l s b ~ t
-    ) => IsLabel l (Setter s t b)
-  where
+instance (ModifyField l s t a b) => IsLabel l (Setter s t b) where
     fromLabel _proxy = Setter (setField _proxy)
+
+-- }}} Setter -----------------------------------------------------------------
+
+-- {{{ Modifier ---------------------------------------------------------------
+
+newtype Modifier s t a b = Modifier ((a -> b) -> s -> t)
+  deriving (Generic, Typeable)
+
+instance (ModifyField l s t a b) => IsLabel l (Modifier s t a b) where
+    fromLabel proxy = Modifier (modifyField proxy)
+
+modify :: Modifier s t a b -> (a -> b) -> s -> t
+modify (Modifier f) = f
+
+-- {{{ Modifier ---------------------------------------------------------------

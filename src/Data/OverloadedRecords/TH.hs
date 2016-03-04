@@ -144,7 +144,7 @@ import Data.OverloadedLabels (IsLabel(fromLabel))
 import Data.OverloadedRecords
     ( FieldType
     , HasField(getField)
-    , SetField(setField)
+    , ModifyField(setField)
     , UpdateType
     )
 
@@ -181,7 +181,8 @@ type instance
         DeriveOverloadedRecordsParams
 
 instance
-    SetField "fieldDerivation" DeriveOverloadedRecordsParams FieldDerivation
+    ModifyField "fieldDerivation" DeriveOverloadedRecordsParams
+        DeriveOverloadedRecordsParams FieldDerivation FieldDerivation
   where
     setField _proxy s b = s{_fieldDerivation = b}
 
@@ -325,7 +326,7 @@ overloadedRecord params = withReified $ \name -> \case
     x -> canNotDeriveError name x
   where
     withReified :: (Name -> Info -> Q a) -> Name -> Q a
-    withReified f t = (reify t >>= f t)
+    withReified f t = reify t >>= f t
 
     canNotDeriveError :: Show a => Name -> a -> Q b
     canNotDeriveError = (fail .) . errMessage
@@ -644,7 +645,10 @@ deriveSetter labelType recordType fieldType newRecordType newFieldType setter =
     [d| type instance UpdateType $(labelType) $(recordType) $(newFieldType) =
             $(newRecordType)
 
-        instance SetField $(labelType) $(recordType) $(fieldType) where
+        instance
+            ModifyField $(labelType) $(recordType) $(newRecordType)
+                $(fieldType) $(newFieldType)
+          where
             setField _proxy = $(setter)
     |]
 
