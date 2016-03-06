@@ -33,6 +33,7 @@ import Test.Framework.Providers.HUnit (testCase)
 import Test.HUnit ((@?=))
 
 import Data.OverloadedLabels.TH (label, labels)
+import Data.OverloadedRecords (HasField(getField), ModifyField(setField))
 import Data.OverloadedRecords.TH (defaultMakeFieldName, overloadedRecord)
 
 
@@ -50,6 +51,33 @@ newtype Bar a = Bar {_bar :: a}
 
 overloadedRecord def ''Bar
 label "bar"
+
+-- Type isomorphic to (a, b), the reason for not using (a, b) directly is to
+-- prevent any possible instance declaration clashes in the future.
+data Pair a b = Pair a b
+  deriving (Eq, Show)
+
+{-
+type instance FieldType "fst" (Pair a b) = a
+type instance FieldType "snd" (Pair a b) = b
+
+type instance UpdateType "fst" (Pair a b) a' = Pair a' b
+type instance UpdateType "snd" (Pair a b) b' = Pair a  b'
+-}
+
+instance HasField "fst" (Pair a b) a where
+    getField _proxy (Pair a _) = a
+
+instance HasField "snd" (Pair a b) b where
+    getField _proxy (Pair _ b) = b
+
+instance ModifyField "fst" (Pair a b) (Pair a' b) a a' where
+    setField _proxy (Pair _ b) a' = Pair a' b
+
+instance ModifyField "snd" (Pair a b) (Pair a b') b b' where
+    setField _proxy (Pair a _) b' = Pair a b'
+
+labels ["fst", "snd"]
 
 tests :: [Test]
 tests =
@@ -72,8 +100,20 @@ tests =
             $ (Foo 1 False & x .~ 2) @?= Foo 2 False
         , testCase "Foo 1 False & y .~ True = Foo 1 True"
             $ (Foo 1 False & y .~ True) @?= Foo 1 True
-        , testCase "Bar (Just True) & bar .~ Nothing = Bar Nothing"
-            $ (Bar (Just True) & bar .~ Nothing) @?= Bar Nothing
+        , testCase "Bar (Just True) & bar .~ Nothing =\
+            \ Bar (Nothing :: Maybe Bool)"
+            $ (Bar (Just True) & bar .~ Nothing)
+                @?= Bar (Nothing :: Maybe Bool)
+        ]
+    , testGroup "Type changing assignment"
+        [ testCase "fst (Pair (1 :: Int) False) = 1"
+            $ fst (Pair (1 :: Int) False) @?= 1
+        , testCase "snd (Pair (1 :: Int) False) = False"
+            $ snd (Pair (1 :: Int) False) @?= False
+        , testCase "Pair (1 :: Int) False & fst .~ True = Pair True False"
+            $ (Pair (1 :: Int) False & fst .~ True) @?= Pair True False
+        , testCase "Pair (1 :: Int) False & fst .~ True = Pair True False"
+            $ (Pair (1 :: Int) False & snd .~ Just True) @?= Pair 1 (Just True)
         ]
     ]
   where

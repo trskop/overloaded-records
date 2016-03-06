@@ -81,7 +81,7 @@ class HasField (l :: Symbol) s a | l s -> a where
     getField :: Proxy# l -> s -> a
 
 class (HasField l s a) => ModifyField (l :: Symbol) s t a b
-    | l s -> a, l t -> b, l s b -> t, t -> s
+    | l s -> a, l t -> b, l s b -> t, l t a -> s
   where
     {-# MINIMAL modifyField | setField #-}
 
