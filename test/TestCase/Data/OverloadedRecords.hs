@@ -118,7 +118,8 @@ tests =
             $ snd (Pair (1 :: Int) False) @?= False
         , testCase "Pair (1 :: Int) False & fst .~ True = Pair True False"
             $ (Pair (1 :: Int) False & fst .~ True) @?= Pair True False
-        , testCase "Pair (1 :: Int) False & fst .~ True = Pair True False"
+        , testCase "Pair (1 :: Int) False & fst .~ Just True =\
+            \ Pair 1 (Just True)"
             $ (Pair (1 :: Int) False & snd .~ Just True) @?= Pair 1 (Just True)
         ]
     ]
