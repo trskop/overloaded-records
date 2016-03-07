@@ -91,6 +91,9 @@ class (HasField l s a) => ModifyField (l :: Symbol) s t a b
     setField :: Proxy# l -> s -> b -> t
     setField proxy s b = modifyField proxy (const b) s
 
+    fieldLens :: Functor f => Proxy# l -> (a -> f b) -> s -> f t
+    fieldLens proxy f s = setField proxy s <$> f (getField proxy s)
+
 -- | Returns 'True' if type @a@ is a function.
 type family FromArrow (a :: *) :: Bool where
     FromArrow (x -> y) = 'True
@@ -113,7 +116,7 @@ instance
     , ModifyField l s t a b
     ) => IsFieldAccessor l (a -> f b) (s -> f t) 'True
   where
-    fieldAccessor proxy f s = setField proxy s <$> f (getField proxy s)
+    fieldAccessor = fieldLens
 
 -- | Overloaded getter:
 --
@@ -122,7 +125,6 @@ instance
 -- @
 instance
     ( HasField l s a
---  , FieldType l s ~ a
     , FromArrow s ~ 'False
     ) => IsFieldAccessor l s a 'False
   where
