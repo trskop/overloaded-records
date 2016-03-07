@@ -1,5 +1,5 @@
 name:                   overloaded-records
-version:                0.3.0.0
+version:                0.4.0.0
 synopsis:               Overloaded Records based on current GHC proposal.
 description:
   Implementation of /Overloaded Record Fields/ based on current GHC proposal.
@@ -155,7 +155,7 @@ source-repository head
   type:                 git
   location:             git://github.com/trskop/overloaded-records.git
 
-source-repository this
-  type:                 git
-  location:             git://github.com/trskop/overloaded-records.git
-  tag:                  0.3.0.0
+--source-repository this
+--  type:                 git
+--  location:             git://github.com/trskop/overloaded-records.git
+--  tag:                  0.4.0.0
