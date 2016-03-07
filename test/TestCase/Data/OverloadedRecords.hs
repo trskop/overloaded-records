@@ -16,6 +16,8 @@
 module TestCase.Data.OverloadedRecords (tests)
   where
 
+import Prelude (Num((+)))
+
 import Data.Bool (Bool(False, True))
 import Data.Eq (Eq)
 import Data.Function (($), (.), const, flip, id)
@@ -110,9 +112,7 @@ tests =
                 @?= Bar (Nothing :: Maybe Bool)
         , testCase "Bar (Just True) & simple . bar .~ Nothing = Bar Nothing"
             $ (Bar (Just True) & simple . bar .~ Nothing) @?= Bar Nothing
-        ]
-    , testGroup "Type changing assignment"
-        [ testCase "fst (Pair (1 :: Int) False) = 1"
+        , testCase "fst (Pair (1 :: Int) False) = 1"
             $ fst (Pair (1 :: Int) False) @?= 1
         , testCase "snd (Pair (1 :: Int) False) = False"
             $ snd (Pair (1 :: Int) False) @?= False
@@ -121,6 +121,10 @@ tests =
         , testCase "Pair (1 :: Int) False & fst .~ Just True =\
             \ Pair 1 (Just True)"
             $ (Pair (1 :: Int) False & snd .~ Just True) @?= Pair 1 (Just True)
+        , testCase "Pair (1 :: Int) False & fst %~ (+1) = Pair 2 False"
+            $ (Pair (1 :: Int) False & fst %~ (+1)) @?= Pair 2 False
+        , testCase "Pair (1 :: Int) False & fst %~ show = Pair \"1\" False"
+            $ (Pair (1 :: Int) False & fst %~ show) @?= Pair "1" False
         ]
     ]
   where
@@ -132,8 +136,12 @@ tests =
         cn = "ConstructorName"
 
     (.~) :: ((a -> Identity b) -> s -> Identity t) -> b -> s -> t
-    (.~) l b = runIdentity . l (const $ Identity b)
+    l .~ b = runIdentity . l (const $ Identity b)
     infixr 4 .~
+
+    (%~) :: ((a -> Identity b) -> s -> Identity t) -> (a -> b) -> s -> t
+    l %~ f = runIdentity . l (Identity . f)
+    infixr 4 %~
 
     -- Data.Function constains (&) since base 4.8.0.0, which was bundled with
     -- GHC 7.10, but we are supporting also GHC 7.8.
