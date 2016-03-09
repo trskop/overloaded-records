@@ -419,11 +419,9 @@ deriveForConstructor params name typeVars = \case
         deriveFor constructorName [arg0, arg1] $ \(strict, argType) f ->
             f Nothing strict argType
 
-#if 0
 #if MIN_VERSION_template_haskell(2,11,0)
-    GadtC _ _ _ ->
-    RecGadtC _ _ _ ->
-#endif
+    GadtC _ _ _ -> fail "GADTs aren't yet supported."
+    RecGadtC _ _ _ -> fail "GADTs aren't yet supported."
 #endif
 
     -- Existentials aren't supported.
