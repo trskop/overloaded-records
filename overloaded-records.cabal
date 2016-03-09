@@ -44,6 +44,7 @@ library
     , Data.OverloadedLabels.TH
     , Data.OverloadedRecords
     , Data.OverloadedRecords.TH
+    , Data.OverloadedRecords.TH.Internal
   -- other-modules:
 
   default-language:     Haskell2010
@@ -93,6 +94,7 @@ test-suite unit-tests
     , Data.OverloadedLabels.TH
     , Data.OverloadedRecords
     , Data.OverloadedRecords.TH
+    , Data.OverloadedRecords.TH.Internal
     , TestCase
     , TestCase.Data.OverloadedRecords
 
@@ -132,6 +134,8 @@ test-suite unit-tests
     , test-framework-hunit >=0.2.6 && <1
       -- ^ Lower versions have more restrictive bounds on test-framework.
     -- }}} Test-suite dependencies --------------------------------------------
+
+    , overloaded-records
 
   if impl(ghc <7.10)
     -- Identity functor is available in base bundled with GHC >=7.10, for older
