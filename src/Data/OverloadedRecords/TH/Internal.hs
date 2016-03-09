@@ -117,7 +117,16 @@ import GHC.Exts (Proxy#, proxy#)
 import Text.Show (Show(show))
 
 import Language.Haskell.TH
-    ( Con(ForallC, InfixC, NormalC, RecC)
+    ( Con
+        ( ForallC
+        , InfixC
+        , NormalC
+        , RecC
+#if MIN_VERSION_template_haskell(2,11,0)
+        , GadtC
+        , RecGadtC
+#endif
+        )
     , Dec(DataD, NewtypeD)
     , DecsQ
     , ExpQ
