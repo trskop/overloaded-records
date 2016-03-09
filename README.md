@@ -14,7 +14,7 @@ Implementation of *Overloaded Record Fields* based on current GHC proposal. It
 is built on top of functionality that is included in GHC 8.0.1, but it works on
 older GHC versions as well. Most importantly, this library provides Template
 Haskell functions for automatic deriving of instancess for `HasField` and
-`SetField` type classes. With these instances overloaded fields can be used
+`ModifyField` type classes. With these instances overloaded fields can be used
 directly as getters and lenses.
 
 ```Haskell
