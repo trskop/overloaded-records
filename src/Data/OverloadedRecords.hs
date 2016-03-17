@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -18,10 +19,10 @@
 --
 -- Maintainer:   peter.trsko@gmail.com
 -- Stability:    experimental
--- Portability:  DataKinds, DeriveDataTypeable, DeriveGeneric,
---               FlexibleInstances, FunctionalDependencies, MagicHash,
---               MultiParamTypeClasses, NoImplicitPrelude, TypeFamilies,
---               UndecidableInstances
+-- Portability:  ConstraintKinds, DataKinds, DeriveDataTypeable, DeriveGeneric,
+--               FlexibleInstances, FlexibleContexts, FunctionalDependencies,
+--               MagicHash, MultiParamTypeClasses, NoImplicitPrelude,
+--               TypeFamilies, UndecidableInstances
 --
 -- Magic classes for OverloadedRecordFields.
 --
@@ -48,6 +49,18 @@ module Data.OverloadedRecords
 
     , Modifier
     , modify
+
+    -- ** Simple Setter and Modifier
+    , ModifyField'
+    , fieldLens'
+    , modifyField'
+    , setField'
+
+    , Setter'
+    , set'
+
+    , Modifier'
+    , modify'
 
     -- ** IsLabel For Getter and Lens
     , FromArrow
@@ -80,21 +93,57 @@ class HasField (l :: Symbol) s a | l s -> a where
     -- | Get value of a field.
     getField :: Proxy# l -> s -> a
 
+-- | Represents overloaded record fields that can be modified, i.e. updated.
+--
+-- @
+-- forall l a b s t.
+--     'ModifyField' l s t a b => a /= b <==> s /= t
+-- @
+--
+-- In other words, if field is modified and its type has changed, then the type
+-- of the record has to change as well, and vice versa. Functional dependencies
+-- enforce this rule.
 class (HasField l s a) => ModifyField (l :: Symbol) s t a b
     | l s -> a, l t -> b, l s b -> t, l t a -> s
   where
     {-# MINIMAL modifyField | setField #-}
 
+    -- | Modify overloaded field @l :: 'Symbol'@ of record @s@ using pure
+    -- function @a -> b@, and produce new record @t@.
     modifyField :: Proxy# l -> (a -> b) -> s -> t
     modifyField proxy f s = setField proxy s (f (getField proxy s))
 
+    -- | Set overloaded field @l :: 'Symbol'@ of record @s@ to value of type
+    -- @b@, and produce new record @t@. Please note that there is no mention of
+    -- the type @a@, therefore the compiler may not be able to derive it in
+    -- some cases.
     setField :: Proxy# l -> s -> b -> t
     setField proxy s b = modifyField proxy (const b) s
 
+    -- | Lens for overloaded field @l :: 'Symbol'@ of record @s@.
     fieldLens :: Functor f => Proxy# l -> (a -> f b) -> s -> f t
     fieldLens proxy f s = setField proxy s <$> f (getField proxy s)
 
--- | Returns 'True' if type @a@ is a function.
+-- | Same as 'ModifyField', but type-changing assignment is prohibited.
+type ModifyField' l s a = ModifyField l s s a a
+
+-- | Same as 'setFiend', but the field type can not be changed.
+setField' :: ModifyField' l s a => Proxy# l -> s -> a -> s
+setField' = setField
+
+-- | Same as 'modifyField', but the field type can not be changed.
+modifyField' :: ModifyField' l s a => Proxy# l -> (a -> a) -> s -> s
+modifyField' = modifyField
+
+-- | Same as 'modifyField', but the field type can not be changed.
+fieldLens'
+    :: (Functor f, ModifyField' l s a)
+    => Proxy# l
+    -> (a -> f a)
+    -> s -> f s
+fieldLens' = fieldLens
+
+-- | Returns 'True' if type @a :: \*@ is a function.
 type family FromArrow (a :: *) :: Bool where
     FromArrow (x -> y) = 'True
     FromArrow t        = 'False
@@ -158,6 +207,13 @@ newtype Setter s t b = Setter (s -> b -> t)
 set :: Setter s t b -> s -> b -> t
 set (Setter f) = f
 
+-- | Simple 'Setter' which forbids changing the field type.
+type Setter' s a = Setter s s a
+
+-- | Same as 'set', but the field type can not be changed.
+set' :: Setter' s a -> s -> a -> s
+set' = set
+
 instance (ModifyField l s t a b) => IsLabel l (Setter s t b) where
     fromLabel _proxy = Setter (setField _proxy)
 
@@ -173,5 +229,12 @@ instance (ModifyField l s t a b) => IsLabel l (Modifier s t a b) where
 
 modify :: Modifier s t a b -> (a -> b) -> s -> t
 modify (Modifier f) = f
+
+-- | Simple 'Modifier' which forbids changing the field type.
+type Modifier' s a = Modifier s s a a
+
+-- | Same as 'modify', but the field type can not be changed.
+modify' :: Modifier' s a -> (a -> a) -> s -> s
+modify' = modify
 
 -- {{{ Modifier ---------------------------------------------------------------

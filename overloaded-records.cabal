@@ -49,7 +49,8 @@ library
 
   default-language:     Haskell2010
   other-extensions:
-      CPP
+      ConstraintKinds
+    , CPP
     , DataKinds
     , DeriveDataTypeable
     , DeriveGeneric
