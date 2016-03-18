@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -21,8 +22,8 @@
 -- Stability:    experimental
 -- Portability:  ConstraintKinds, DataKinds, DeriveDataTypeable, DeriveGeneric,
 --               FlexibleInstances, FlexibleContexts, FunctionalDependencies,
---               MagicHash, MultiParamTypeClasses, NoImplicitPrelude,
---               TypeFamilies, UndecidableInstances
+--               LambdaCase MagicHash, MultiParamTypeClasses,
+--               NoImplicitPrelude, TypeFamilies, UndecidableInstances
 --
 -- Magic classes for OverloadedRecordFields.
 --
@@ -71,6 +72,7 @@ module Data.OverloadedRecords
 import Data.Bool (Bool(False, True))
 import Data.Function (const)
 import Data.Functor (Functor, (<$>))
+import Data.Maybe (Maybe(Just, Nothing))
 import Data.Typeable (Typeable)
 import GHC.Exts (Proxy#)
 import GHC.Generics (Generic)
@@ -238,3 +240,520 @@ modify' :: Modifier' s a -> (a -> a) -> s -> s
 modify' = modify
 
 -- {{{ Modifier ---------------------------------------------------------------
+
+-- {{{ Instances --------------------------------------------------------------
+
+-- {{{ Instances -- Tuples ----------------------------------------------------
+
+type instance FieldType "fst" (a, b) = a
+type instance UpdateType "fst" (a, b) a' = (a', b)
+
+type instance FieldType "snd" (a, b) = b
+type instance UpdateType "snd" (a, b) b' = (a, b')
+
+type instance FieldType "curry" ((a, b) -> c) = a -> b -> c
+
+instance HasField "fst" (a, b) a where
+    getField _proxy (a, _) = a
+
+instance HasField "snd" (a, b) b where
+    getField _proxy (_, b) = b
+
+instance HasField "curry" ((a, b) -> c) (a -> b -> c) where
+    getField _proxy f a b = f (a, b)
+
+instance ModifyField "fst" (a, b) (a', b) a a' where
+    modifyField _proxy f (a, b) = (f a, b)
+    setField _proxy (_, b) a = (a, b)
+
+instance ModifyField "snd" (a, b) (a, b') b b' where
+    modifyField _proxy f (a, b) = (a, f b)
+    setField _proxy (a, _) b = (a, b)
+
+type instance FieldType "fst" (a, b, c) = a
+type instance UpdateType "fst" (a, b, c) a' = (a', b, c)
+
+type instance FieldType "snd" (a, b, c) = b
+type instance UpdateType "snd" (a, b, c) b' = (a, b', c)
+
+type instance FieldType "thd" (a, b, c) = c
+type instance UpdateType "thd" (a, b, c) c' = (a, b, c')
+
+type instance FieldType "curry" ((a, b, c) -> d) = a -> b -> c -> d
+
+instance HasField "fst" (a, b, c) a where
+    getField _proxy (a, _, _) = a
+
+instance HasField "snd" (a, b, c) b where
+    getField _proxy (_, b, _) = b
+
+instance HasField "thd" (a, b, c) c where
+    getField _proxy (_, _, c) = c
+
+instance HasField "curry" ((a, b, c) -> d) (a -> b -> c -> d) where
+    getField _proxy f a b c = f (a, b, c)
+
+instance ModifyField "fst" (a, b, c) (a', b, c) a a' where
+    modifyField _proxy f (a, b, c) = (f a, b, c)
+    setField _proxy (_, b, c) a = (a, b, c)
+
+instance ModifyField "snd" (a, b, c) (a, b', c) b b' where
+    modifyField _proxy f (a, b, c) = (a, f b, c)
+    setField _proxy (a, _, c) b = (a, b, c)
+
+instance ModifyField "thd" (a, b, c) (a, b, c') c c' where
+    modifyField _proxy f (a, b, c) = (a, b, f c)
+    setField _proxy (a, b, _) c = (a, b, c)
+
+type instance FieldType "fst" (a1, a2, a3, a4) = a1
+type instance UpdateType "fst" (a1, a2, a3, a4) a1' = (a1', a2, a3, a4)
+
+type instance FieldType "snd" (a1, a2, a3, a4) = a2
+type instance UpdateType "snd" (a1, a2, a3, a4) a2' = (a1, a2', a3, a4)
+
+type instance FieldType "thd" (a1, a2, a3, a4) = a3
+type instance UpdateType "thd" (a1, a2, a3, a4) a3' = (a1, a3', a3, a4)
+
+type instance FieldType "curry" ((a1, a2, a3, a4) -> r) =
+    a1 -> a2 -> a3 -> a4 -> r
+
+instance HasField "fst" (a1, a2, a3, a4) a1 where
+    getField _proxy (a1, _, _, _) = a1
+
+instance HasField "snd" (a1, a2, a3, a4) a2 where
+    getField _proxy (_, a2, _, _) = a2
+
+instance HasField "thd" (a1, a2, a3, a4) a3 where
+    getField _proxy (_, _, a3, _) = a3
+
+instance ModifyField "fst" (a1, a2, a3, a4) (a1', a2, a3, a4) a1 a1' where
+    modifyField _proxy f (a1, a2, a3, a4) = (f a1, a2, a3, a4)
+    setField _proxy (_, a2, a3, a4) a1 = (a1, a2, a3, a4)
+
+instance ModifyField "snd" (a1, a2, a3, a4) (a1, a2', a3, a4) a2 a2' where
+    modifyField _proxy f (a1, a2, a3, a4) = (a1, f a2, a3, a4)
+    setField _proxy (a1, _, a3, a4) a2 = (a1, a2, a3, a4)
+
+instance ModifyField "thd" (a1, a2, a3, a4) (a1, a2, a3', a4) a3 a3' where
+    modifyField _proxy f (a1, a2, a3, a4) = (a1, a2, f a3, a4)
+    setField _proxy (a1, a2, _, a4) a3 = (a1, a2, a3, a4)
+
+instance HasField "curry" ((a1, a2, a3, a4) -> r) (a1 -> a2 -> a3 -> a4 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 = f (a1, a2, a3, a4)
+
+type instance FieldType "fst" (a1, a2, a3, a4, a5) = a1
+type instance UpdateType "fst" (a1, a2, a3, a4, a5) a1' = (a1', a2, a3, a4, a5)
+
+type instance FieldType "snd" (a1, a2, a3, a4, a5) = a2
+type instance UpdateType "snd" (a1, a2, a3, a4, a5) a2' = (a1, a2', a3, a4, a5)
+
+type instance FieldType "thd" (a1, a2, a3, a4, a5) = a3
+type instance UpdateType "thd" (a1, a2, a3, a4, a5) a3' = (a1, a2, a3', a4, a5)
+
+type instance FieldType "curry" ((a1, a2, a3, a4, a5) -> r) =
+    a1 -> a2 -> a3 -> a4 -> a5 -> r
+
+instance HasField "fst" (a1, a2, a3, a4, a5) a1 where
+    getField _proxy (a1, _, _, _, _) = a1
+
+instance HasField "snd" (a1, a2, a3, a4, a5) a2 where
+    getField _proxy (_, a2, _, _, _) = a2
+
+instance HasField "thd" (a1, a2, a3, a4, a5) a3 where
+    getField _proxy (_, _, a3, _, _) = a3
+
+instance ModifyField "fst" (a1, a2, a3, a4, a5) (a1', a2, a3, a4, a5) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5) = (f a1, a2, a3, a4, a5)
+    setField _proxy (_, a2, a3, a4, a5) a1 = (a1, a2, a3, a4, a5)
+
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5) (a1, a2', a3, a4, a5) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5) = (a1, f a2, a3, a4, a5)
+    setField _proxy (a1, _, a3, a4, a5) a2 = (a1, a2, a3, a4, a5)
+
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5) (a1, a2, a3', a4, a5) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5) = (a1, a2, f a3, a4, a5)
+    setField _proxy (a1, a2, _, a4, a5) a3 = (a1, a2, a3, a4, a5)
+
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5) -> r)
+        (a1 -> a2 -> a3 -> a4 -> a5 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 a5 = f (a1, a2, a3, a4, a5)
+
+type instance FieldType "fst" (a1, a2, a3, a4, a5, a6) = a1
+type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6) a1' =
+    (a1', a2, a3, a4, a5, a6)
+
+type instance FieldType "snd" (a1, a2, a3, a4, a5, a6) = a2
+type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6) a2' =
+    (a1, a2', a3, a4, a5, a6)
+
+type instance FieldType "thd" (a1, a2, a3, a4, a5, a6) = a3
+type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6) a3' =
+    (a1, a2, a3', a4, a5, a6)
+
+type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6) -> r) =
+    a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> r
+
+instance HasField "fst" (a1, a2, a3, a4, a5, a6) a1 where
+    getField _proxy (a1, _, _, _, _, _) = a1
+
+instance HasField "snd" (a1, a2, a3, a4, a5, a6) a2 where
+    getField _proxy (_, a2, _, _, _, _) = a2
+
+instance HasField "thd" (a1, a2, a3, a4, a5, a6) a3 where
+    getField _proxy (_, _, a3, _, _, _) = a3
+
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6) (a1', a2, a3, a4, a5, a6) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6) = (f a1, a2, a3, a4, a5, a6)
+    setField _proxy (_, a2, a3, a4, a5, a6) a1 = (a1, a2, a3, a4, a5, a6)
+
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6) (a1, a2', a3, a4, a5, a6) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6) = (a1, f a2, a3, a4, a5, a6)
+    setField _proxy (a1, _, a3, a4, a5, a6) a2 = (a1, a2, a3, a4, a5, a6)
+
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6) (a1, a2, a3', a4, a5, a6) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6) = (a1, a2, f a3, a4, a5, a6)
+    setField _proxy (a1, a2, _, a4, a5, a6) a3 = (a1, a2, a3, a4, a5, a6)
+
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5, a6) -> r)
+        (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 = f (a1, a2, a3, a4, a5, a6)
+
+type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7) = a1
+type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7) a1' =
+    (a1', a2, a3, a4, a5, a6, a7)
+
+type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7) = a2
+type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7) a2' =
+    (a1, a2', a3, a4, a5, a6, a7)
+
+type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7) = a3
+type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7) a3' =
+    (a1, a2, a3', a4, a5, a6, a7)
+
+type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6, a7) -> r) =
+    a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> r
+
+instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7) a1 where
+    getField _proxy (a1, _, _, _, _, _, _) = a1
+
+instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7) a2 where
+    getField _proxy (_, a2, _, _, _, _, _) = a2
+
+instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7) a3 where
+    getField _proxy (_, _, a3, _, _, _, _) = a3
+
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7)
+        (a1', a2, a3, a4, a5, a6, a7) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7) =
+        (f a1, a2, a3, a4, a5, a6, a7)
+    setField _proxy (_, a2, a3, a4, a5, a6, a7) a1 =
+        (a1, a2, a3, a4, a5, a6, a7)
+
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7)
+        (a1, a2', a3, a4, a5, a6, a7) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7) =
+        (a1, f a2, a3, a4, a5, a6, a7)
+    setField _proxy (a1, _, a3, a4, a5, a6, a7) a2 =
+        (a1, a2, a3, a4, a5, a6, a7)
+
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7)
+        (a1, a2, a3', a4, a5, a6, a7) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7) =
+        (a1, a2, f a3, a4, a5, a6, a7)
+    setField _proxy (a1, a2, _, a4, a5, a6, a7) a3 =
+        (a1, a2, a3, a4, a5, a6, a7)
+
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5, a6, a7) -> r)
+        (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 = f (a1, a2, a3, a4, a5, a6, a7)
+
+type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8) = a1
+type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7, a8) a1' =
+    (a1', a2, a3, a4, a5, a6, a7, a8)
+
+type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7, a8) = a2
+type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7, a8) a2' =
+    (a1, a2', a3, a4, a5, a6, a7, a8)
+
+type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7, a8) = a3
+type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7, a8) a3' =
+    (a1, a2, a3', a4, a5, a6, a7, a8)
+
+type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6, a7, a8) -> r) =
+    a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> r
+
+instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8) a1 where
+    getField _proxy (a1, _, _, _, _, _, _, _) = a1
+
+instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8) a2 where
+    getField _proxy (_, a2, _, _, _, _, _, _) = a2
+
+instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8) a3 where
+    getField _proxy (_, _, a3, _, _, _, _, _) = a3
+
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8)
+        (a1', a2, a3, a4, a5, a6, a7, a8) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8)
+    setField _proxy (_, a2, a3, a4, a5, a6, a7, a8) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8)
+
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8)
+        (a1, a2', a3, a4, a5, a6, a7, a8) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8)
+    setField _proxy (a1, _, a3, a4, a5, a6, a7, a8) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8)
+
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8)
+        (a1, a2, a3', a4, a5, a6, a7, a8) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8)
+    setField _proxy (a1, a2, _, a4, a5, a6, a7, a8) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8)
+
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8) -> r)
+        (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8)
+
+type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9) = a1
+type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a1' =
+    (a1', a2, a3, a4, a5, a6, a7, a8, a9)
+
+type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) = a2
+type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a2' =
+    (a1, a2', a3, a4, a5, a6, a7, a8, a9)
+
+type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) = a3
+type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a3' =
+    (a1, a2, a3', a4, a5, a6, a7, a8, a9)
+
+type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9) -> r) =
+    a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> r
+
+instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a1 where
+    getField _proxy (a1, _, _, _, _, _, _, _, _) = a1
+
+instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a2 where
+    getField _proxy (_, a2, _, _, _, _, _, _, _) = a2
+
+instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a3 where
+    getField _proxy (_, _, a3, _, _, _, _, _, _) = a3
+
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8, a9)
+    setField _proxy (_, a2, a3, a4, a5, a6, a7, a8, a9) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8, a9)
+    setField _proxy (a1, _, a3, a4, a5, a6, a7, a8, a9) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8, a9)
+    setField _proxy (a1, a2, _, a4, a5, a6, a7, a8, a9) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9) -> r)
+        (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+
+type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) = a1
+type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a1' =
+    (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10)
+
+type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) = a2
+type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a2' =
+    (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10)
+
+type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) = a3
+type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a3' =
+    (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10)
+
+type instance FieldType "curry"
+    ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) -> r) =
+        a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> r
+
+instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a1 where
+    getField _proxy (a1, _, _, _, _, _, _, _, _, _) = a1
+
+instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a2 where
+    getField _proxy (_, a2, _, _, _, _, _, _, _, _) = a2
+
+instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a3 where
+    getField _proxy (_, _, a3, _, _, _, _, _, _, _) = a3
+
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+    setField _proxy (_, a2, a3, a4, a5, a6, a7, a8, a9, a10) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8, a9, a10)
+    setField _proxy (a1, _, a3, a4, a5, a6, a7, a8, a9, a10) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8, a9, a10)
+    setField _proxy (a1, a2, _, a4, a5, a6, a7, a8, a9, a10) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) -> r)
+        (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+
+-- }}} Instances -- Tuples ----------------------------------------------------
+
+-- {{{ Instances -- Lists -----------------------------------------------------
+
+type instance FieldType "head" [a] = Maybe a
+type instance UpdateType "head" [a] (Maybe a) = [a]
+
+-- |
+-- >>> #head []
+-- Nothing
+--
+-- >>> #head [1, 2, 3]
+-- Just 1
+instance HasField "head" [a] (Maybe a) where
+    getField _proxy []      = Nothing
+    getField _proxy (a : _) = Just a
+
+-- |
+-- >>> #head [] Nothing
+-- []
+--
+-- >>> #head [] (Just 1)
+-- [1]
+--
+-- >>> #head [1, 2, 3] Nothing
+-- [2, 3]
+--
+-- >>> #head [1, 2, 3] (Just 4)
+-- [4, 2, 3]
+instance ModifyField "head" [a] [a] (Maybe a) (Maybe a) where
+    modifyField _proxy f = \case
+        [] -> case f Nothing of
+            Nothing -> []
+            Just a -> [a]
+        a : as -> case f (Just a) of
+            Nothing -> as
+            Just a' -> a' : as
+
+    setField _proxy = \case
+        [] -> \case
+            Nothing -> []
+            Just a -> [a]
+        _ : as -> \case
+            Nothing -> as
+            Just a -> a : as
+
+type instance FieldType "tail" [a] = Maybe [a]
+type instance UpdateType "tail" [a] (Maybe [a]) = [a]
+
+-- |
+-- >>> #tail []
+-- Nothing
+--
+-- >>> #tail [1, 2, 3]
+-- Just [2, 3]
+instance HasField "tail" [a] (Maybe [a]) where
+    getField _proxy []       = Nothing
+    getField _proxy (_ : as) = Just as
+
+-- |
+-- >>> #tail [] Nothing
+-- []
+--
+-- >>> #tail [] (Just [2, 3])
+-- [2, 3]
+--
+-- >>> #tail [1, 2, 3] Nothing
+-- [1]
+--
+-- >>> #tail [1, 2, 3] (Just [4, 5, 6])
+-- [1, 4, 5, 6]
+instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
+    modifyField _proxy f = \case
+        [] -> case f Nothing of
+            Nothing -> []
+            Just as -> as
+        a : as -> case f (Just as) of
+            Nothing -> [a]
+            Just as' -> a : as'
+
+    setField _proxy = \case
+        [] -> \case
+            Nothing -> []
+            Just as -> as
+        a : _ -> \case
+            Nothing -> [a]
+            Just as -> a : as
+
+-- }}} Instances -- Lists -----------------------------------------------------
+
+-- }}} Instances --------------------------------------------------------------
