@@ -684,16 +684,16 @@ instance HasField "head" [a] (Maybe a) where
     getField _proxy (a : _) = Just a
 
 -- |
--- >>> #head [] Nothing
+-- >>> set' #head [] Nothing :: [Int]
 -- []
 --
--- >>> #head [] (Just 1)
+-- >>> set' #head [] (Just 1)
 -- [1]
 --
--- >>> #head [1, 2, 3] Nothing
+-- >>> set' #head [1, 2, 3] Nothing
 -- [2, 3]
 --
--- >>> #head [1, 2, 3] (Just 4)
+-- >>> set' #head [1, 2, 3] (Just 4)
 -- [4, 2, 3]
 instance ModifyField "head" [a] [a] (Maybe a) (Maybe a) where
     modifyField _proxy f = \case
@@ -726,16 +726,16 @@ instance HasField "tail" [a] (Maybe [a]) where
     getField _proxy (_ : as) = Just as
 
 -- |
--- >>> #tail [] Nothing
+-- >>> set' #tail [] Nothing :: [Int]
 -- []
 --
--- >>> #tail [] (Just [2, 3])
+-- >>> set' #tail [] (Just [2, 3])
 -- [2, 3]
 --
--- >>> #tail [1, 2, 3] Nothing
+-- >>> set' #tail [1, 2, 3] Nothing
 -- [1]
 --
--- >>> #tail [1, 2, 3] (Just [4, 5, 6])
+-- >>> set' #tail [1, 2, 3] (Just [4, 5, 6])
 -- [1, 4, 5, 6]
 instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
     modifyField _proxy f = \case
