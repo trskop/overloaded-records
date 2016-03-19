@@ -1,6 +1,23 @@
 # ChangeLog / ReleaseNotes
 
+
 ## Version 0.4.0.0
+
+* Renamed `SetField` type class to `ModifyField`, it now contains following
+  methods (**breaking change**):
+    * `modifyField :: Proxy# l -> (a -> b) -> s -> t`
+    * `setField :: Proxy# l -> s -> b -> t`
+    * `fieldLens :: Functor f => Proxy# l -> (a -> f b) -> s -> f t`
+* Instances for tuples (i.e. `(a, b)`, `(a, b, c)`, ...) and lists (i.e.
+  `[a]`). (**new**)
+* Definitions from `Data.OverloadedRecords.TH` were moved to
+  `Data.OverloadedRecords.TH.Internal`, so that API can be split in to stable
+  and unstable (internal) API. (**change**)
+* Aliases `HasField'` and `ModifyField'` that enforce `s = t` and `a = b`. This
+  is similar to definitions like `Lens'`. Simplified versions of methods and
+  functions are included using the same naming convention. (**new**)
+* Uploaded to [Hackage][]:
+  <http://hackage.haskell.org/package/overloaded-records-0.4.0.0>
 
 
 ## Version 0.3.0.0
