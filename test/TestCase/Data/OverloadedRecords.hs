@@ -35,7 +35,7 @@ import Test.Framework.Providers.HUnit (testCase)
 import Test.HUnit ((@?=))
 
 import Data.OverloadedLabels.TH (label, labels)
-import Data.OverloadedRecords (HasField(getField), ModifyField(setField))
+import Data.OverloadedRecords (HasField(getField), ModifyField(setField), set')
 import Data.OverloadedRecords.TH (defaultMakeFieldName, overloadedRecord)
 
 
@@ -79,7 +79,7 @@ instance ModifyField "fst" (Pair a b) (Pair a' b) a a' where
 instance ModifyField "snd" (Pair a b) (Pair a b') b b' where
     setField _proxy (Pair a _) b' = Pair a b'
 
-labels ["fst", "snd"]
+labels ["fst", "snd", "head", "tail"]
 
 tests :: [Test]
 tests =
@@ -125,6 +125,56 @@ tests =
             $ (Pair (1 :: Int) False & fst %~ (+1)) @?= Pair 2 False
         , testCase "Pair (1 :: Int) False & fst %~ show = Pair \"1\" False"
             $ (Pair (1 :: Int) False & fst %~ show) @?= Pair "1" False
+        ]
+    , testGroup "#head for [a]"
+        [ testCase "#head ([] :: Int) = Nothing"
+            $ head ([] :: [Int]) @?= Nothing
+        , testCase "#head [1, 2, 3] = Just 1"
+            $ head [1, 2, 3 :: Int] @?= Just 1
+            -- Type signature is here just to suppress defaulting warnings.
+        ]
+    , testGroup "#head for [a]"
+        [ testCase "set' #head [] Nothing = []"
+            $ set' head [] Nothing @?= ([] :: [Int])
+        , testCase "[] & simple . #head .~ Nothing = []"
+            $ ([] & simple . head .~ Nothing) @?= ([] :: [Int])
+        , testCase "set' #head [] (Just 1) = [1]"
+            $ set' head [] (Just 1) @?= [1 :: Int]
+            -- Type signature is here just to suppress defaulting warnings.
+        , testCase "[] & simple . #head .~ Just 1 = [1 :: Int]"
+            $ ([] & simple . head .~ Just 1) @?= [1 :: Int]
+        , testCase "set #head [1, 2, 3] Nothing = [2, 3]"
+            $ set' head [1, 2, 3] Nothing @?= [2, 3 :: Int]
+            -- Type signature is here just to suppress defaulting warnings.
+        , testCase "[1, 2, 3] & simple . #head .~ Nothing = [2, 3]"
+            $ ([1, 2, 3] & simple . head .~ Nothing) @?= [2, 3 :: Int]
+        , testCase "set #head [1, 2, 3] (Just 4) = [4, 2, 3]"
+            $ set' head [1, 2, 3] (Just 4) @?= [4, 2, 3 :: Int]
+            -- Type signature is here just to suppress defaulting warnings.
+        , testCase "[1, 2, 3] & simple . #head .~ Just 4 = [4, 2, 3]"
+            $ ([1, 2, 3] & simple . head .~ Just 4) @?= [4, 2, 3 :: Int]
+        ]
+    , testGroup "#tail for [a]"
+        [ testCase "set' #tail [] Nothing = []"
+            $ set' tail [] Nothing @?= ([] :: [Int])
+        , testCase "[] & simple . #tail .~ Nothing = []"
+            $ ([] & simple . tail .~ Nothing) @?= ([] :: [Int])
+        , testCase "set' #tail [] (Just [1, 2]) = [1, 2]"
+            $ set' tail [] (Just [1, 2]) @?= [1, 2 :: Int]
+            -- Type signature is here just to suppress defaulting warnings.
+        , testCase "[] & simple . #tail .~ Just [1, 2] = [1, 2]"
+            $ ([] & simple . tail .~ Just [1, 2]) @?= [1, 2 :: Int]
+        , testCase "set #tail [1, 2, 3] Nothing = [1]"
+            $ set' tail [1, 2, 3] Nothing @?= [1 :: Int]
+            -- Type signature is here just to suppress defaulting warnings.
+        , testCase "[1, 2, 3] & simple . #tail .~ Nothing = [1 :: Int]"
+            $ ([1, 2, 3] & simple . tail .~ Nothing) @?= [1 :: Int]
+        , testCase "set #tail [1, 2, 3] (Just [4, 5, 6]) = [1, 4, 5, 6]"
+            $ set' tail [1, 2, 3] (Just [4, 5, 6]) @?= [1, 4, 5, 6 :: Int]
+            -- Type signature is here just to suppress defaulting warnings.
+        , testCase "[1, 2, 3] & simple . #tail .~ Just [4, 5, 6] = [1, 4, 5, 6]"
+            $ ([1, 2, 3] & simple . tail .~ Just [4, 5, 6])
+                @?= [1, 4, 5, 6 :: Int]
         ]
     ]
   where
