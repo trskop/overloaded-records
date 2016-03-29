@@ -220,11 +220,10 @@ type (:::) (l :: Symbol) (a :: *) = '(l, a)
 -- | Wrapper for a set function, lens naming convention is used for type
 -- variables. Its instance for 'IsLabel' forces overloaded label to behave as a
 -- setter.
-newtype Setter s t b = Setter (s -> b -> t)
-  deriving (Generic, Typeable)
+type Setter s t b = forall a. Modifier s t a b
 
--- | Extract set function from 'Setter'. Using 'Setter' instance for 'IsLabel'
--- forces overloaded label to behave as a setter.
+-- | Extract set function from 'Setter'. Using 'Modifier' instance for
+-- 'IsLabel' forces overloaded label to behave as a setter.
 --
 -- Usage example:
 --
@@ -235,20 +234,19 @@ newtype Setter s t b = Setter (s -> b -> t)
 -- overloadedRecord ''Bar
 -- @
 --
--- >>> set bar (Bar (Just False)) Nothing
+-- >>> set #bar (Nothing :: Maybe Int) (Bar (Just False))
 -- Bar {_bar = Nothing}
-set :: Setter s t b -> s -> b -> t
-set (Setter f) = f
+set :: Setter s t b -> b -> s -> t
+set m b = modify m (const b)
+{-# INLINE set #-}
 
 -- | Simple 'Setter' which forbids changing the field type.
-type Setter' s a = Setter s s a
+type Setter' s a = Modifier' s a
 
 -- | Same as 'set', but the field type can not be changed.
-set' :: Setter' s a -> s -> a -> s
-set' = set
-
-instance (ModifyField l s t a b) => IsLabel l (Setter s t b) where
-    fromLabel _proxy = Setter (setField _proxy)
+set' :: Setter' s a -> a -> s -> s
+set' m a = modify' m (const a)
+{-# INLINE set' #-}
 
 -- }}} Setter -----------------------------------------------------------------
 

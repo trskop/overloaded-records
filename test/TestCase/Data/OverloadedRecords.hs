@@ -134,43 +134,43 @@ tests =
             -- Type signature is here just to suppress defaulting warnings.
         ]
     , testGroup "#head for [a]"
-        [ testCase "set' #head [] Nothing = []"
-            $ set' head [] Nothing @?= ([] :: [Int])
+        [ testCase "set' #head Nothing [] = []"
+            $ set' head Nothing [] @?= ([] :: [Int])
         , testCase "[] & simple . #head .~ Nothing = []"
             $ ([] & simple . head .~ Nothing) @?= ([] :: [Int])
-        , testCase "set' #head [] (Just 1) = [1]"
-            $ set' head [] (Just 1) @?= [1 :: Int]
+        , testCase "set' #head (Just 1) [] = [1]"
+            $ set' head (Just 1) [] @?= [1 :: Int]
             -- Type signature is here just to suppress defaulting warnings.
         , testCase "[] & simple . #head .~ Just 1 = [1 :: Int]"
             $ ([] & simple . head .~ Just 1) @?= [1 :: Int]
-        , testCase "set #head [1, 2, 3] Nothing = [2, 3]"
-            $ set' head [1, 2, 3] Nothing @?= [2, 3 :: Int]
+        , testCase "set #head Nothing [1, 2, 3] = [2, 3]"
+            $ set' head Nothing [1, 2, 3] @?= [2, 3 :: Int]
             -- Type signature is here just to suppress defaulting warnings.
         , testCase "[1, 2, 3] & simple . #head .~ Nothing = [2, 3]"
             $ ([1, 2, 3] & simple . head .~ Nothing) @?= [2, 3 :: Int]
-        , testCase "set #head [1, 2, 3] (Just 4) = [4, 2, 3]"
-            $ set' head [1, 2, 3] (Just 4) @?= [4, 2, 3 :: Int]
+        , testCase "set #head (Just 4) [1, 2, 3] = [4, 2, 3]"
+            $ set' head (Just 4) [1, 2, 3] @?= [4, 2, 3 :: Int]
             -- Type signature is here just to suppress defaulting warnings.
         , testCase "[1, 2, 3] & simple . #head .~ Just 4 = [4, 2, 3]"
             $ ([1, 2, 3] & simple . head .~ Just 4) @?= [4, 2, 3 :: Int]
         ]
     , testGroup "#tail for [a]"
-        [ testCase "set' #tail [] Nothing = []"
-            $ set' tail [] Nothing @?= ([] :: [Int])
+        [ testCase "set' #tail Nothing [] = []"
+            $ set' tail Nothing [] @?= ([] :: [Int])
         , testCase "[] & simple . #tail .~ Nothing = []"
             $ ([] & simple . tail .~ Nothing) @?= ([] :: [Int])
-        , testCase "set' #tail [] (Just [1, 2]) = [1, 2]"
-            $ set' tail [] (Just [1, 2]) @?= [1, 2 :: Int]
+        , testCase "set' #tail (Just [1, 2]) [] = [1, 2]"
+            $ set' tail (Just [1, 2]) [] @?= [1, 2 :: Int]
             -- Type signature is here just to suppress defaulting warnings.
         , testCase "[] & simple . #tail .~ Just [1, 2] = [1, 2]"
             $ ([] & simple . tail .~ Just [1, 2]) @?= [1, 2 :: Int]
-        , testCase "set #tail [1, 2, 3] Nothing = [1]"
-            $ set' tail [1, 2, 3] Nothing @?= [1 :: Int]
+        , testCase "set' #tail Nothing [1, 2, 3] = [1]"
+            $ set' tail Nothing [1, 2, 3] @?= [1 :: Int]
             -- Type signature is here just to suppress defaulting warnings.
         , testCase "[1, 2, 3] & simple . #tail .~ Nothing = [1 :: Int]"
             $ ([1, 2, 3] & simple . tail .~ Nothing) @?= [1 :: Int]
-        , testCase "set #tail [1, 2, 3] (Just [4, 5, 6]) = [1, 4, 5, 6]"
-            $ set' tail [1, 2, 3] (Just [4, 5, 6]) @?= [1, 4, 5, 6 :: Int]
+        , testCase "set' #tail (Just [4, 5, 6]) [1, 2, 3] = [1, 4, 5, 6]"
+            $ set' tail (Just [4, 5, 6]) [1, 2, 3] @?= [1, 4, 5, 6 :: Int]
             -- Type signature is here just to suppress defaulting warnings.
         , testCase "[1, 2, 3] & simple . #tail .~ Just [4, 5, 6] = [1, 4, 5, 6]"
             $ ([1, 2, 3] & simple . tail .~ Just [4, 5, 6])
