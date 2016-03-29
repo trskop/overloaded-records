@@ -16,6 +16,14 @@
 * Aliases `HasField'` and `ModifyField'` that enforce `s = t` and `a = b`. This
   is similar to definitions like `Lens'`. Simplified versions of methods and
   functions are included using the same naming convention. (**new**)
+* `Setter` and `Setter'` changed to type aliases for `Modifier` type.
+  (**breaking change**)
+* Changed order of arguments of functions `set` and `set'` (**breaking
+  change**):
+    * `set :: Setter s t b -> b -> s -> t`
+    * `set' :: Setter' s a -> a -> s -> s`
+* Introduced type family `R` that can be used to define more compact type
+  signatures when mentioning multiple record fields in it. (**new**)
 * Uploaded to [Hackage][]:
   <http://hackage.haskell.org/package/overloaded-records-0.4.0.0>
 
