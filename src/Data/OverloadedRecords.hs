@@ -2,14 +2,16 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
@@ -23,7 +25,8 @@
 -- Portability:  ConstraintKinds, DataKinds, DeriveDataTypeable, DeriveGeneric,
 --               FlexibleInstances, FlexibleContexts, FunctionalDependencies,
 --               LambdaCase MagicHash, MultiParamTypeClasses,
---               NoImplicitPrelude, TypeFamilies, UndecidableInstances
+--               NoImplicitPrelude, RankNTypes, TypeFamilies, TypeOperators,
+--               UndecidableInstances
 --
 -- Magic classes for OverloadedRecordFields.
 --
@@ -44,6 +47,8 @@ module Data.OverloadedRecords
     -- ** Setter and Modifier
     , UpdateType
     , ModifyField(..)
+    , R
+    , (:::)
 
     , Setter
     , set
@@ -74,7 +79,7 @@ import Data.Function (const)
 import Data.Functor (Functor, (<$>))
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Typeable (Typeable)
-import GHC.Exts (Proxy#)
+import GHC.Exts (Constraint, Proxy#)
 import GHC.Generics (Generic)
 import GHC.TypeLits (Symbol)
 
@@ -184,6 +189,32 @@ instance
 instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
     fromLabel = fieldAccessor
 
+-- | Using this type family provides more compact type signatures for multiple
+-- record fields.
+--
+-- @
+-- data Point3D a = Point3D
+--     { _x :: a
+--     , _y :: a
+--     , _z :: a
+--     }
+--   deriving Show
+--
+-- 'Data.OverloadedRecords.TH.overloadedRecord' 'Data.Default.def' ''Point3D
+--
+-- setPoint
+--     :: 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ::: a] r
+--     => a -> a -> a -> r -> r
+-- setPoint x y z = set' #x x . set' #y y . set' #z z
+-- @
+type family R (ts :: [(Symbol, *)]) (r :: *) :: Constraint where
+    R '[] r             = ()
+    R ('(l, a) ': ts) r = (ModifyField' l r a, R ts r)
+
+-- | This type alias is used for more readable type signatures when using 'R'
+-- type family.
+type (:::) (l :: Symbol) (a :: *) = '(l, a)
+
 -- {{{ Setter -----------------------------------------------------------------
 
 -- | Wrapper for a set function, lens naming convention is used for type
@@ -239,7 +270,7 @@ type Modifier' s a = Modifier s s a a
 modify' :: Modifier' s a -> (a -> a) -> s -> s
 modify' = modify
 
--- {{{ Modifier ---------------------------------------------------------------
+-- }}} Modifier ---------------------------------------------------------------
 
 -- {{{ Instances --------------------------------------------------------------
 
