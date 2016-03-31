@@ -18,6 +18,9 @@
   functions are included using the same naming convention. (**new**)
 * `Setter` and `Setter'` changed to type aliases for `Modifier` type.
   (**breaking change**)
+* Introducing `Setting` type alias for `Modifier` along with `setting`, which
+  is an alternative to `set` operation. (**new**)
+    * `setting :: Setting a s t b -> Proxy a -> b -> s -> t`
 * Changed order of arguments of functions `set` and `set'` (**breaking
   change**):
     * `set :: Setter s t b -> b -> s -> t`

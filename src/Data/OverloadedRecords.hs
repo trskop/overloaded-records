@@ -50,6 +50,9 @@ module Data.OverloadedRecords
     , R
     , (:::)
 
+    , Setting
+    , setting
+
     , Setter
     , set
 
@@ -78,6 +81,7 @@ import Data.Bool (Bool(False, True))
 import Data.Function (const)
 import Data.Functor (Functor, (<$>))
 import Data.Maybe (Maybe(Just, Nothing))
+import Data.Proxy (Proxy)
 import Data.Typeable (Typeable)
 import GHC.Exts (Constraint, Proxy#)
 import GHC.Generics (Generic)
@@ -104,7 +108,7 @@ class HasField (l :: Symbol) s a | l s -> a where
 --
 -- @
 -- forall l a b s t.
---     'ModifyField' l s t a b => a /= b <==> s /= t
+--   'ModifyField' l s t a b => a /= b \<==\> s /= t
 -- @
 --
 -- In other words, if field is modified and its type has changed, then the type
@@ -193,20 +197,23 @@ instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
 -- record fields.
 --
 -- @
--- data Point3D a = Point3D
+-- data V3 a = V3
 --     { _x :: a
 --     , _y :: a
 --     , _z :: a
 --     }
 --   deriving Show
 --
--- 'Data.OverloadedRecords.TH.overloadedRecord' 'Data.Default.def' ''Point3D
+-- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V3
 --
--- setPoint
---     :: 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ::: a] r
+-- setV3
+--     :: 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r
 --     => a -> a -> a -> r -> r
--- setPoint x y z = set' #x x . set' #y y . set' #z z
+-- setV3 x y z = 'set'' \#x x . 'set'' \#y y . 'set'' \#z z
 -- @
+--
+-- >>> setV3 0 0 0 (V3 1 1 1 :: V3 Int)
+-- V3 {_x = 0, _y = 0, _z = 0}
 type family R (ts :: [(Symbol, *)]) (r :: *) :: Constraint where
     R '[] r             = ()
     R ('(l, a) ': ts) r = (ModifyField' l r a, R ts r)
@@ -217,9 +224,46 @@ type (:::) (l :: Symbol) (a :: *) = '(l, a)
 
 -- {{{ Setter -----------------------------------------------------------------
 
+-- | 'Setting' is just a form of a 'Modifier' that allows us to specify what
+-- was the original type of the value we are changing.
+--
+-- See also 'Setter', 'Setter'', 'Modifier', and 'Modifier''.
+type Setting a s t b = Modifier s t a b
+
+-- | Same as 'set', but allows us to use phantom type to restrict the type of a
+-- value before it was changed.
+--
+-- @
+-- newtype Bar a = Bar {_bar :: a}
+--   deriving Show
+--
+-- overloadedRecord ''Bar
+-- @
+--
+-- Now we can use 'setting' to change the value stored in @Bar@. The type
+-- signature in following example is not required, it is what type checker
+-- would infer.
+--
+-- @
+-- 'setting' \#bar ('Proxy' @Int) False :: Bar Int -> Bar Bool
+-- @
+setting :: Setting a s t b -> Proxy a -> b -> s -> t
+setting x _proxy b = modify x (const b)
+
 -- | Wrapper for a set function, lens naming convention is used for type
 -- variables. Its instance for 'IsLabel' forces overloaded label to behave as a
--- setter.
+-- setter. We could also define 'Setter' as:
+--
+-- @
+-- type 'Setter' s t b = forall a. 'Setting' a s t b
+-- @
+--
+-- Notice that the @forall a@ forbids us from stating what exactly it is,
+-- therefore functional dependencies in 'ModifyField' type class have to be
+-- able to uniquely identify it. If that is not possible, then we may have to
+-- use explicit type signature.
+--
+-- See also 'Setting', 'Setter'', 'Modifier', and 'Modifier''.
 type Setter s t b = forall a. Modifier s t a b
 
 -- | Extract set function from 'Setter'. Using 'Modifier' instance for
@@ -240,7 +284,14 @@ set :: Setter s t b -> b -> s -> t
 set m b = modify m (const b)
 {-# INLINE set #-}
 
--- | Simple 'Setter' which forbids changing the field type.
+-- | Simple 'Setter' which forbids changing the field type. It can be also
+-- defined in terms of 'Setting':
+--
+-- @
+-- type 'Setter'' s a = 'Setting' a s s a
+-- @
+--
+-- See also 'Setting', 'Setter', 'Modifier', and 'Modifier''.
 type Setter' s a = Modifier' s a
 
 -- | Same as 'set', but the field type can not be changed.
@@ -252,16 +303,24 @@ set' m a = modify' m (const a)
 
 -- {{{ Modifier ---------------------------------------------------------------
 
+-- | Wrapper for a modification function, lens naming convention is used for
+-- type variables. Its instance for 'IsLabel' forces overloaded label to behave
+-- as a modification function.
+--
+-- See also 'Modifier'', 'Setting', 'Setter', and 'Setter''.
 newtype Modifier s t a b = Modifier ((a -> b) -> s -> t)
   deriving (Generic, Typeable)
 
 instance (ModifyField l s t a b) => IsLabel l (Modifier s t a b) where
     fromLabel proxy = Modifier (modifyField proxy)
 
+-- | Modify field value using provided function.
 modify :: Modifier s t a b -> (a -> b) -> s -> t
 modify (Modifier f) = f
 
 -- | Simple 'Modifier' which forbids changing the field type.
+--
+-- See also 'Modifier', 'Modifier'', 'Setting', 'Setter', and 'Setter''.
 type Modifier' s a = Modifier s s a a
 
 -- | Same as 'modify', but the field type can not be changed.
