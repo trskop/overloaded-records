@@ -35,6 +35,10 @@
 -- by Adam Gundry under MIT License.
 module Data.OverloadedRecords
     (
+    -- * Usage Examples
+    --
+    -- $usageExamples
+
     -- * Oveloaded Labels
       module Data.OverloadedLabels
 
@@ -114,6 +118,8 @@ class HasField (l :: Symbol) s a | l s -> a where
 -- In other words, if field is modified and its type has changed, then the type
 -- of the record has to change as well, and vice versa. Functional dependencies
 -- enforce this rule.
+--
+-- /Since 0.4.0.0/
 class (HasField l s a) => ModifyField (l :: Symbol) s t a b
     | l s -> a, l t -> b, l s b -> t, l t a -> s
   where
@@ -136,17 +142,25 @@ class (HasField l s a) => ModifyField (l :: Symbol) s t a b
     fieldLens proxy f s = setField proxy s <$> f (getField proxy s)
 
 -- | Same as 'ModifyField', but type-changing assignment is prohibited.
+--
+-- /Since 0.4.0.0/
 type ModifyField' l s a = ModifyField l s s a a
 
 -- | Same as 'setFiend', but the field type can not be changed.
+--
+-- /Since 0.4.0.0/
 setField' :: ModifyField' l s a => Proxy# l -> s -> a -> s
 setField' = setField
 
 -- | Same as 'modifyField', but the field type can not be changed.
+--
+-- /Since 0.4.0.0/
 modifyField' :: ModifyField' l s a => Proxy# l -> (a -> a) -> s -> s
 modifyField' = modifyField
 
 -- | Same as 'modifyField', but the field type can not be changed.
+--
+-- /Since 0.4.0.0/
 fieldLens'
     :: (Functor f, ModifyField' l s a)
     => Proxy# l
@@ -214,12 +228,16 @@ instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
 --
 -- >>> setV3 0 0 0 (V3 1 1 1 :: V3 Int)
 -- V3 {_x = 0, _y = 0, _z = 0}
+--
+-- /Since 0.4.0.0/
 type family R (ts :: [(Symbol, *)]) (r :: *) :: Constraint where
     R '[] r             = ()
     R ('(l, a) ': ts) r = (ModifyField' l r a, R ts r)
 
 -- | This type alias is used for more readable type signatures when using 'R'
 -- type family.
+--
+-- /Since 0.4.0.0/
 type (:::) (l :: Symbol) (a :: *) = '(l, a)
 
 -- {{{ Setter -----------------------------------------------------------------
@@ -228,6 +246,8 @@ type (:::) (l :: Symbol) (a :: *) = '(l, a)
 -- was the original type of the value we are changing.
 --
 -- See also 'Setter', 'Setter'', 'Modifier', and 'Modifier''.
+--
+-- /Since 0.4.0.0/
 type Setting a s t b = Modifier s t a b
 
 -- | Same as 'set', but allows us to use phantom type to restrict the type of a
@@ -247,6 +267,8 @@ type Setting a s t b = Modifier s t a b
 -- @
 -- 'setting' \#bar ('Proxy' @Int) False :: Bar Int -> Bar Bool
 -- @
+--
+-- /Since 0.4.0.0/
 setting :: Setting a s t b -> Proxy a -> b -> s -> t
 setting x _proxy b = modify x (const b)
 
@@ -264,6 +286,8 @@ setting x _proxy b = modify x (const b)
 -- use explicit type signature.
 --
 -- See also 'Setting', 'Setter'', 'Modifier', and 'Modifier''.
+--
+-- /Definition changed in 0.4.0.0/
 type Setter s t b = forall a. Modifier s t a b
 
 -- | Extract set function from 'Setter'. Using 'Modifier' instance for
@@ -292,6 +316,8 @@ set m b = modify m (const b)
 -- @
 --
 -- See also 'Setting', 'Setter', 'Modifier', and 'Modifier''.
+--
+-- /Definition changed in 0.4.0.0/
 type Setter' s a = Modifier' s a
 
 -- | Same as 'set', but the field type can not be changed.
@@ -308,22 +334,31 @@ set' m a = modify' m (const a)
 -- as a modification function.
 --
 -- See also 'Modifier'', 'Setting', 'Setter', and 'Setter''.
+--
+-- /Since 0.4.0.0/
 newtype Modifier s t a b = Modifier ((a -> b) -> s -> t)
   deriving (Generic, Typeable)
 
+-- /Since 0.4.0.0/
 instance (ModifyField l s t a b) => IsLabel l (Modifier s t a b) where
     fromLabel proxy = Modifier (modifyField proxy)
 
 -- | Modify field value using provided function.
+--
+-- /Since 0.4.0.0/
 modify :: Modifier s t a b -> (a -> b) -> s -> t
 modify (Modifier f) = f
 
 -- | Simple 'Modifier' which forbids changing the field type.
 --
 -- See also 'Modifier', 'Modifier'', 'Setting', 'Setter', and 'Setter''.
+--
+-- /Since 0.4.0.0/
 type Modifier' s a = Modifier s s a a
 
 -- | Same as 'modify', but the field type can not be changed.
+--
+-- /Since 0.4.0.0/
 modify' :: Modifier' s a -> (a -> a) -> s -> s
 modify' = modify
 
@@ -333,219 +368,313 @@ modify' = modify
 
 -- {{{ Instances -- Tuples ----------------------------------------------------
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a, b) = a
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a, b) a' = (a', b)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a, b) = b
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a, b) b' = (a, b')
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a, b) -> c) = a -> b -> c
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a, b) a where
     getField _proxy (a, _) = a
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a, b) b where
     getField _proxy (_, b) = b
 
+-- | /Since 0.4.0.0/
 instance HasField "curry" ((a, b) -> c) (a -> b -> c) where
     getField _proxy f a b = f (a, b)
 
+-- | /Since 0.4.0.0/
 instance ModifyField "fst" (a, b) (a', b) a a' where
     modifyField _proxy f (a, b) = (f a, b)
     setField _proxy (_, b) a = (a, b)
 
+-- | /Since 0.4.0.0/
 instance ModifyField "snd" (a, b) (a, b') b b' where
     modifyField _proxy f (a, b) = (a, f b)
     setField _proxy (a, _) b = (a, b)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a, b, c) = a
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a, b, c) a' = (a', b, c)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a, b, c) = b
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a, b, c) b' = (a, b', c)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a, b, c) = c
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a, b, c) c' = (a, b, c')
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a, b, c) -> d) = a -> b -> c -> d
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a, b, c) a where
     getField _proxy (a, _, _) = a
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a, b, c) b where
     getField _proxy (_, b, _) = b
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a, b, c) c where
     getField _proxy (_, _, c) = c
 
+-- | /Since 0.4.0.0/
 instance HasField "curry" ((a, b, c) -> d) (a -> b -> c -> d) where
     getField _proxy f a b c = f (a, b, c)
 
+-- | /Since 0.4.0.0/
 instance ModifyField "fst" (a, b, c) (a', b, c) a a' where
     modifyField _proxy f (a, b, c) = (f a, b, c)
     setField _proxy (_, b, c) a = (a, b, c)
 
+-- | /Since 0.4.0.0/
 instance ModifyField "snd" (a, b, c) (a, b', c) b b' where
     modifyField _proxy f (a, b, c) = (a, f b, c)
     setField _proxy (a, _, c) b = (a, b, c)
 
+-- | /Since 0.4.0.0/
 instance ModifyField "thd" (a, b, c) (a, b, c') c c' where
     modifyField _proxy f (a, b, c) = (a, b, f c)
     setField _proxy (a, b, _) c = (a, b, c)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4) = a1
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a1, a2, a3, a4) a1' = (a1', a2, a3, a4)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a1, a2, a3, a4) = a2
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a1, a2, a3, a4) a2' = (a1, a2', a3, a4)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a1, a2, a3, a4) = a3
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a1, a2, a3, a4) a3' = (a1, a3', a3, a4)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a1, a2, a3, a4) -> r) =
     a1 -> a2 -> a3 -> a4 -> r
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a1, a2, a3, a4) a1 where
     getField _proxy (a1, _, _, _) = a1
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a1, a2, a3, a4) a2 where
     getField _proxy (_, a2, _, _) = a2
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a1, a2, a3, a4) a3 where
     getField _proxy (_, _, a3, _) = a3
 
+-- | /Since 0.4.0.0/
 instance ModifyField "fst" (a1, a2, a3, a4) (a1', a2, a3, a4) a1 a1' where
     modifyField _proxy f (a1, a2, a3, a4) = (f a1, a2, a3, a4)
     setField _proxy (_, a2, a3, a4) a1 = (a1, a2, a3, a4)
 
+-- | /Since 0.4.0.0/
 instance ModifyField "snd" (a1, a2, a3, a4) (a1, a2', a3, a4) a2 a2' where
     modifyField _proxy f (a1, a2, a3, a4) = (a1, f a2, a3, a4)
     setField _proxy (a1, _, a3, a4) a2 = (a1, a2, a3, a4)
 
+-- | /Since 0.4.0.0/
 instance ModifyField "thd" (a1, a2, a3, a4) (a1, a2, a3', a4) a3 a3' where
     modifyField _proxy f (a1, a2, a3, a4) = (a1, a2, f a3, a4)
     setField _proxy (a1, a2, _, a4) a3 = (a1, a2, a3, a4)
 
+-- | /Since 0.4.0.0/
 instance HasField "curry" ((a1, a2, a3, a4) -> r) (a1 -> a2 -> a3 -> a4 -> r)
   where
     getField _proxy f a1 a2 a3 a4 = f (a1, a2, a3, a4)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5) = a1
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a1, a2, a3, a4, a5) a1' = (a1', a2, a3, a4, a5)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a1, a2, a3, a4, a5) = a2
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a1, a2, a3, a4, a5) a2' = (a1, a2', a3, a4, a5)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a1, a2, a3, a4, a5) = a3
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a1, a2, a3, a4, a5) a3' = (a1, a2, a3', a4, a5)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a1, a2, a3, a4, a5) -> r) =
     a1 -> a2 -> a3 -> a4 -> a5 -> r
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a1, a2, a3, a4, a5) a1 where
     getField _proxy (a1, _, _, _, _) = a1
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a1, a2, a3, a4, a5) a2 where
     getField _proxy (_, a2, _, _, _) = a2
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a1, a2, a3, a4, a5) a3 where
     getField _proxy (_, _, a3, _, _) = a3
 
+-- | /Since 0.4.0.0/
 instance ModifyField "fst" (a1, a2, a3, a4, a5) (a1', a2, a3, a4, a5) a1 a1'
   where
     modifyField _proxy f (a1, a2, a3, a4, a5) = (f a1, a2, a3, a4, a5)
     setField _proxy (_, a2, a3, a4, a5) a1 = (a1, a2, a3, a4, a5)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "snd" (a1, a2, a3, a4, a5) (a1, a2', a3, a4, a5) a2 a2'
   where
     modifyField _proxy f (a1, a2, a3, a4, a5) = (a1, f a2, a3, a4, a5)
     setField _proxy (a1, _, a3, a4, a5) a2 = (a1, a2, a3, a4, a5)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "thd" (a1, a2, a3, a4, a5) (a1, a2, a3', a4, a5) a3 a3'
   where
     modifyField _proxy f (a1, a2, a3, a4, a5) = (a1, a2, f a3, a4, a5)
     setField _proxy (a1, a2, _, a4, a5) a3 = (a1, a2, a3, a4, a5)
 
+-- | /Since 0.4.0.0/
 instance
     HasField "curry" ((a1, a2, a3, a4, a5) -> r)
         (a1 -> a2 -> a3 -> a4 -> a5 -> r)
   where
     getField _proxy f a1 a2 a3 a4 a5 = f (a1, a2, a3, a4, a5)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6) = a1
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6) a1' =
     (a1', a2, a3, a4, a5, a6)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a1, a2, a3, a4, a5, a6) = a2
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6) a2' =
     (a1, a2', a3, a4, a5, a6)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a1, a2, a3, a4, a5, a6) = a3
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6) a3' =
     (a1, a2, a3', a4, a5, a6)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6) -> r) =
     a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> r
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a1, a2, a3, a4, a5, a6) a1 where
     getField _proxy (a1, _, _, _, _, _) = a1
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a1, a2, a3, a4, a5, a6) a2 where
     getField _proxy (_, a2, _, _, _, _) = a2
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a1, a2, a3, a4, a5, a6) a3 where
     getField _proxy (_, _, a3, _, _, _) = a3
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "fst" (a1, a2, a3, a4, a5, a6) (a1', a2, a3, a4, a5, a6) a1 a1'
   where
     modifyField _proxy f (a1, a2, a3, a4, a5, a6) = (f a1, a2, a3, a4, a5, a6)
     setField _proxy (_, a2, a3, a4, a5, a6) a1 = (a1, a2, a3, a4, a5, a6)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "snd" (a1, a2, a3, a4, a5, a6) (a1, a2', a3, a4, a5, a6) a2 a2'
   where
     modifyField _proxy f (a1, a2, a3, a4, a5, a6) = (a1, f a2, a3, a4, a5, a6)
     setField _proxy (a1, _, a3, a4, a5, a6) a2 = (a1, a2, a3, a4, a5, a6)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "thd" (a1, a2, a3, a4, a5, a6) (a1, a2, a3', a4, a5, a6) a3 a3'
   where
     modifyField _proxy f (a1, a2, a3, a4, a5, a6) = (a1, a2, f a3, a4, a5, a6)
     setField _proxy (a1, a2, _, a4, a5, a6) a3 = (a1, a2, a3, a4, a5, a6)
 
+-- | /Since 0.4.0.0/
 instance
     HasField "curry" ((a1, a2, a3, a4, a5, a6) -> r)
         (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> r)
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 = f (a1, a2, a3, a4, a5, a6)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7) = a1
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7) a1' =
     (a1', a2, a3, a4, a5, a6, a7)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7) = a2
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7) a2' =
     (a1, a2', a3, a4, a5, a6, a7)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7) = a3
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7) a3' =
     (a1, a2, a3', a4, a5, a6, a7)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6, a7) -> r) =
     a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> r
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7) a1 where
     getField _proxy (a1, _, _, _, _, _, _) = a1
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7) a2 where
     getField _proxy (_, a2, _, _, _, _, _) = a2
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7) a3 where
     getField _proxy (_, _, a3, _, _, _, _) = a3
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7)
         (a1', a2, a3, a4, a5, a6, a7) a1 a1'
@@ -555,6 +684,7 @@ instance
     setField _proxy (_, a2, a3, a4, a5, a6, a7) a1 =
         (a1, a2, a3, a4, a5, a6, a7)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7)
         (a1, a2', a3, a4, a5, a6, a7) a2 a2'
@@ -564,6 +694,7 @@ instance
     setField _proxy (a1, _, a3, a4, a5, a6, a7) a2 =
         (a1, a2, a3, a4, a5, a6, a7)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7)
         (a1, a2, a3', a4, a5, a6, a7) a3 a3'
@@ -573,36 +704,51 @@ instance
     setField _proxy (a1, a2, _, a4, a5, a6, a7) a3 =
         (a1, a2, a3, a4, a5, a6, a7)
 
+-- | /Since 0.4.0.0/
 instance
     HasField "curry" ((a1, a2, a3, a4, a5, a6, a7) -> r)
         (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> r)
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 = f (a1, a2, a3, a4, a5, a6, a7)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8) = a1
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7, a8) a1' =
     (a1', a2, a3, a4, a5, a6, a7, a8)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7, a8) = a2
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7, a8) a2' =
     (a1, a2', a3, a4, a5, a6, a7, a8)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7, a8) = a3
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7, a8) a3' =
     (a1, a2, a3', a4, a5, a6, a7, a8)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6, a7, a8) -> r) =
     a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> r
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8) a1 where
     getField _proxy (a1, _, _, _, _, _, _, _) = a1
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8) a2 where
     getField _proxy (_, a2, _, _, _, _, _, _) = a2
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8) a3 where
     getField _proxy (_, _, a3, _, _, _, _, _) = a3
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8)
         (a1', a2, a3, a4, a5, a6, a7, a8) a1 a1'
@@ -612,6 +758,7 @@ instance
     setField _proxy (_, a2, a3, a4, a5, a6, a7, a8) a1 =
         (a1, a2, a3, a4, a5, a6, a7, a8)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8)
         (a1, a2', a3, a4, a5, a6, a7, a8) a2 a2'
@@ -621,6 +768,7 @@ instance
     setField _proxy (a1, _, a3, a4, a5, a6, a7, a8) a2 =
         (a1, a2, a3, a4, a5, a6, a7, a8)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8)
         (a1, a2, a3', a4, a5, a6, a7, a8) a3 a3'
@@ -630,6 +778,7 @@ instance
     setField _proxy (a1, a2, _, a4, a5, a6, a7, a8) a3 =
         (a1, a2, a3, a4, a5, a6, a7, a8)
 
+-- | /Since 0.4.0.0/
 instance
     HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8) -> r)
         (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> r)
@@ -637,30 +786,44 @@ instance
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 =
         f (a1, a2, a3, a4, a5, a6, a7, a8)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9) = a1
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a1' =
     (a1', a2, a3, a4, a5, a6, a7, a8, a9)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) = a2
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a2' =
     (a1, a2', a3, a4, a5, a6, a7, a8, a9)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) = a3
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a3' =
     (a1, a2, a3', a4, a5, a6, a7, a8, a9)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9) -> r) =
     a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> r
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a1 where
     getField _proxy (a1, _, _, _, _, _, _, _, _) = a1
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a2 where
     getField _proxy (_, a2, _, _, _, _, _, _, _) = a2
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9) a3 where
     getField _proxy (_, _, a3, _, _, _, _, _, _) = a3
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9)
         (a1', a2, a3, a4, a5, a6, a7, a8, a9) a1 a1'
@@ -670,6 +833,7 @@ instance
     setField _proxy (_, a2, a3, a4, a5, a6, a7, a8, a9) a1 =
         (a1, a2, a3, a4, a5, a6, a7, a8, a9)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9)
         (a1, a2', a3, a4, a5, a6, a7, a8, a9) a2 a2'
@@ -679,6 +843,7 @@ instance
     setField _proxy (a1, _, a3, a4, a5, a6, a7, a8, a9) a2 =
         (a1, a2, a3, a4, a5, a6, a7, a8, a9)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9)
         (a1, a2, a3', a4, a5, a6, a7, a8, a9) a3 a3'
@@ -688,6 +853,7 @@ instance
     setField _proxy (a1, a2, _, a4, a5, a6, a7, a8, a9) a3 =
         (a1, a2, a3, a4, a5, a6, a7, a8, a9)
 
+-- | /Since 0.4.0.0/
 instance
     HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9) -> r)
         (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> r)
@@ -695,31 +861,45 @@ instance
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) = a1
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a1' =
     (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) = a2
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a2' =
     (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) = a3
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a3' =
     (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10)
 
+-- | /Since 0.4.0.0/
 type instance FieldType "curry"
     ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) -> r) =
         a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> r
 
+-- | /Since 0.4.0.0/
 instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a1 where
     getField _proxy (a1, _, _, _, _, _, _, _, _, _) = a1
 
+-- | /Since 0.4.0.0/
 instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a2 where
     getField _proxy (_, a2, _, _, _, _, _, _, _, _) = a2
 
+-- | /Since 0.4.0.0/
 instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) a3 where
     getField _proxy (_, _, a3, _, _, _, _, _, _, _) = a3
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
         (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10) a1 a1'
@@ -729,6 +909,7 @@ instance
     setField _proxy (_, a2, a3, a4, a5, a6, a7, a8, a9, a10) a1 =
         (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
         (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10) a2 a2'
@@ -738,6 +919,7 @@ instance
     setField _proxy (a1, _, a3, a4, a5, a6, a7, a8, a9, a10) a2 =
         (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
+-- | /Since 0.4.0.0/
 instance
     ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
         (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10) a3 a3'
@@ -747,6 +929,7 @@ instance
     setField _proxy (a1, a2, _, a4, a5, a6, a7, a8, a9, a10) a3 =
         (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
+-- | /Since 0.4.0.0/
 instance
     HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) -> r)
         (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> r)
@@ -758,7 +941,10 @@ instance
 
 -- {{{ Instances -- Lists -----------------------------------------------------
 
+-- | /Since 0.4.0.0/
 type instance FieldType "head" [a] = Maybe a
+
+-- | /Since 0.4.0.0/
 type instance UpdateType "head" [a] (Maybe a) = [a]
 
 -- |
@@ -767,6 +953,8 @@ type instance UpdateType "head" [a] (Maybe a) = [a]
 --
 -- >>> #head [1, 2, 3]
 -- Just 1
+--
+-- /Since 0.4.0.0/
 instance HasField "head" [a] (Maybe a) where
     getField _proxy []      = Nothing
     getField _proxy (a : _) = Just a
@@ -783,6 +971,8 @@ instance HasField "head" [a] (Maybe a) where
 --
 -- >>> set' #head [1, 2, 3] (Just 4)
 -- [4, 2, 3]
+--
+-- /Since 0.4.0.0/
 instance ModifyField "head" [a] [a] (Maybe a) (Maybe a) where
     modifyField _proxy f = \case
         [] -> case f Nothing of
@@ -800,7 +990,9 @@ instance ModifyField "head" [a] [a] (Maybe a) (Maybe a) where
             Nothing -> as
             Just a -> a : as
 
+-- | /Since 0.4.0.0/
 type instance FieldType "tail" [a] = Maybe [a]
+-- | /Since 0.4.0.0/
 type instance UpdateType "tail" [a] (Maybe [a]) = [a]
 
 -- |
@@ -809,6 +1001,8 @@ type instance UpdateType "tail" [a] (Maybe [a]) = [a]
 --
 -- >>> #tail [1, 2, 3]
 -- Just [2, 3]
+--
+-- /Since 0.4.0.0/
 instance HasField "tail" [a] (Maybe [a]) where
     getField _proxy []       = Nothing
     getField _proxy (_ : as) = Just as
@@ -825,6 +1019,8 @@ instance HasField "tail" [a] (Maybe [a]) where
 --
 -- >>> set' #tail [1, 2, 3] (Just [4, 5, 6])
 -- [1, 4, 5, 6]
+--
+-- /Since 0.4.0.0/
 instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
     modifyField _proxy f = \case
         [] -> case f Nothing of
@@ -845,3 +1041,115 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
 -- }}} Instances -- Lists -----------------------------------------------------
 
 -- }}} Instances --------------------------------------------------------------
+
+-- $usageExamples
+--
+-- @
+-- -- Basic set of language extensions required when defining instances for
+-- -- classes and type families from "Data.OverloadedRecords".
+-- {-\# LANGUAGE DataKinds \#-}
+-- {-\# LANGUAGE FlexibleInstances \#-}
+-- {-\# LANGUAGE MultiParamTypeClasses \#-}
+-- {-\# LANGUAGE TemplateHaskell \#-}
+-- {-\# LANGUAGE TypeFamilies \#-}
+--
+-- -- Following language extensions are required by code like this:
+--
+-- {-\# LANGUAGE ConstraintKinds \#-}
+--     -- Codomain of type family 'R' is a 'Constraint' kind.
+--
+-- {-\# LANGUAGE FlexibleContexts \#-}
+--     -- Required in example when field type (second argument of ':::') is a
+--     -- specific type instead of a polymorphic type.
+--
+-- {-\# LANGUAGE TypeOperators \#-}
+--     -- Required due to usage of ':::' type alias.
+--
+-- -- Following language extensions are available only in GHC >=8:
+--
+-- {-\# LANGUAGE DisambiguateRecordFields \#-}
+--     -- V3 and V4 can be defined in one file.
+--
+-- {-\# LANGUAGE OverloadedLabels \#-}
+--     -- Enables #label syntactic sugar.
+--
+-- module Example
+--   where
+--
+-- import Data.Default (Default(def))
+--     -- Provided by one of these packages:
+--     --
+--     -- * <https://hackage.haskell.org/package/data-default data-default>
+--     -- * <https://hackage.haskell.org/package/data-default data-default-extra>
+--
+-- import "Data.OverloadedRecords"
+-- import "Data.OverloadedRecords.TH" ('Data.OverloadedRecords.TH.overloadedRecord')
+--
+--
+-- data V3 a = V3
+--     { _x :: !a
+--     , _y :: !a
+--     , _z :: !a
+--     }
+--   deriving Show
+--
+-- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V3
+--
+-- data V4 a = V4
+--     { _x :: !a
+--     , _y :: !a
+--     , _z :: !a
+--     , _t :: !a
+--     }
+--   deriving Show
+--
+-- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V4
+--
+-- zeroV3
+--     :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     => r -> r
+-- zeroV3 = 'set'' \#x 0 . 'set'' \#y 0 . 'set'' \#z 0
+-- @
+--
+-- The following type signatures for @zeroV3@ are equivalent:
+--
+-- @
+-- zeroV3
+--     :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     => r -> r
+-- @
+--
+-- @
+-- zeroV3
+--     ::  ( Num a
+--         , 'ModifyField'' \"x\" r a
+--         , 'ModifyField'' \"y\" r a
+--         , 'ModifyField'' \"z\" r a
+--         )
+--     => r -> r
+-- @
+--
+-- One of the biggest features of /Overloaded Records/ is the possibility to
+-- define functions that do not depend on concrete data types, but on the
+-- \"fields\" they provide. In example function @zeroV3@ can be applied to
+-- anything that has fields @\"x\"@, @\"y\"@, and @\"z\"@ that reference values
+-- of some @Num@ type:
+--
+-- >>> zeroV3 (V3 1 1 1 :: V3 Int)
+-- V3 {_x = 0, _y = 0, _z = 0}
+--
+-- >>> zeroV3 (V4 1 1 1 1 :: V4 Int)
+-- V4 {_x = 0, _y = 0, _z = 0, _t = 1}
+--
+-- Function @zeroV3@ can be also defined using operators from
+-- <https://hackage.haskell.org/package/lens lens> library:
+--
+-- @
+-- zeroV3
+--     :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     => r -> r
+-- zeroV3 r = r
+--     & \#x .~ 0
+--     & \#y .~ 0
+--     & \#z .~ 0
+-- @
