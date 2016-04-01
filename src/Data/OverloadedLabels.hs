@@ -15,8 +15,8 @@
 -- Stability:    experimental
 -- Portability:  NoImplicitPrelude
 --
--- This module defines the `IsLabel` class is used by the OverloadedLabels
--- extension.  See the
+-- This module defines the `IsLabel` class which is used by the OverloadedLabels
+-- language extension.  See the
 -- <https://ghc.haskell.org/trac/ghc/wiki/Records/OverloadedRecordFields/OverloadedLabels wiki page>
 -- for more details.
 --
@@ -26,22 +26,26 @@
 -- > fromLabel (proxy# :: Proxy# "foo") :: alpha
 --
 -- plus a wanted constraint @IsLabel "foo" alpha@.
+--
+-- On /GHC >=8.0.1/ we just reexport "GHC.OverloadedLabels" module.
 module Data.OverloadedLabels
     (
     -- * Oveloaded Labels
+#ifdef HAVE_OVERLOADED_LABELS
+      module GHC.OverloadedLabels
+#else
       IsLabel(..)
+#endif
     )
   where
 
 #ifdef HAVE_OVERLOADED_LABELS
-import GHC.OverloadedLabels (IsLabel(fromLabel))
+import GHC.OverloadedLabels
 #else
 import GHC.TypeLits (Symbol)
 import GHC.Exts (Proxy#)
-#endif
 
 
-#ifndef HAVE_OVERLOADED_LABELS
 class IsLabel (l :: Symbol) a where
     fromLabel :: Proxy# l -> a
 #endif
