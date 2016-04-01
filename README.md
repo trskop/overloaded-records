@@ -131,7 +131,7 @@ zeroV3
 zeroV3 = set' #x 0 . set' #y 0 . set' #z 0
 ```
 
-The following type signatures for @zeroV3@ are equivalent:
+The following type signatures for `zeroV3` are equivalent:
 
 ```Haskell
 zeroV3
@@ -151,7 +151,7 @@ zeroV3
 
 One of the biggest features of *Overloaded Records* is the possibility to
 define functions that do not depend on concrete data types, but on the "fields"
-they provide. In example function @zeroV3@ can be applied to anything that has
+they provide. In example function `zeroV3` can be applied to anything that has
 fields `"x"`, `"y"`, and `"z"` that reference values of some `Num` type:
 
 ```Haskell
@@ -169,12 +169,12 @@ Function `zeroV3` can be also defined using operators from
 
 ```Haskell
 zeroV3
-    :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+    :: (Num a, R ["x" ::: a, "y" ::: a, "z" ::: a] r)
     => r -> r
 zeroV3 r = r
-    & \#x .~ 0
-    & \#y .~ 0
-    & \#z .~ 0
+    & #x .~ 0
+    & #y .~ 0
+    & #z .~ 0
 ```
 
 
