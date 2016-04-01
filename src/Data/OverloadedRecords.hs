@@ -1067,9 +1067,6 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
 --
 -- -- Following language extensions are available only in GHC >=8:
 --
--- {-\# LANGUAGE DisambiguateRecordFields \#-}
---     -- V3 and V4 can be defined in one file.
---
 -- {-\# LANGUAGE OverloadedLabels \#-}
 --     -- Enables #label syntactic sugar.
 --
@@ -1087,19 +1084,26 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
 --
 --
 -- data V3 a = V3
---     { _x :: !a
---     , _y :: !a
---     , _z :: !a
+--     { v3x :: !a
+--     , v3y :: !a
+--     , v3z :: !a
 --     }
 --   deriving Show
 --
+-- -- Following line derives instances for various type classes and type
+-- -- families that are provided by the overloaded-records library.
+-- --
+-- -- However with def (default settings) this is done only for fields that
+-- -- start with type name, data constructor name, or underscore. Prefix is
+-- -- stripped. In example \"v3x\" is transformed in to \"x\" and so would be
+-- -- \"_x\".
 -- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V3
 --
 -- data V4 a = V4
---     { _x :: !a
---     , _y :: !a
---     , _z :: !a
---     , _t :: !a
+--     { v4x :: !a
+--     , v4y :: !a
+--     , v4z :: !a
+--     , v4t :: !a
 --     }
 --   deriving Show
 --

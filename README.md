@@ -57,34 +57,124 @@ be found on [GHC Wiki: OverloadedRecordFields][].
 
 ## Usage Example
 
+Following is a more complex usage example that demonstrates some of the
+possibilities of /Overloaded Labels/ provided by this library.
+
 ```Haskell
-{-# LANGUAGE DataKinds #-}              -- overloadedRecord, labels
-{-# LANGUAGE FlexibleContexts #-}       -- labels
-{-# LANGUAGE FlexibleInstances #-}      -- overloadedRecord
-{-# LANGUAGE MultiParamTypeClasses #-}  -- overloadedRecord
-{-# LANGUAGE TemplateHaskell #-}        -- overloadedRecord, labels
-{-# LANGUAGE TypeFamilies #-}           -- overloadedRecord
-module FooBar
+-- Basic set of language extensions required when defining instances for
+-- classes and type families from "Data.OverloadedRecords".
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+
+-- Following language extensions are required by code like this:
+
+{-# LANGUAGE ConstraintKinds #-}
+    -- Codomain of type family 'R' is a 'Constraint' kind.
+
+{-# LANGUAGE FlexibleContexts #-}
+    -- Required in example when field type (second argument of ':::') is a
+    -- specific type instead of a polymorphic type.
+
+{-# LANGUAGE TypeOperators #-}
+    -- Required due to usage of ':::' type alias.
+
+-- Following language extensions are available only in GHC >=8:
+
+{-# LANGUAGE OverloadedLabels #-}
+    -- Enables #label syntactic sugar.
+
+module Example
   where
 
-import Data.Default.Class (Default(def))
+import Data.Default (Default(def))
+    -- Provided by one of these packages:
+    --
+    -- * data-default
+    -- * data-default-extra
 
+import Data.OverloadedRecords
 import Data.OverloadedRecords.TH (overloadedRecord)
-import Data.OverloadedLabels.TH (label, labels)
 
 
-data Foo a = Foo
-    { _x :: Int
-    , _y :: a
+data V3 a = V3
+    { v3x :: !a
+    , v3y :: !a
+    , v3z :: !a
     }
+  deriving Show
 
-overloadedRecord def ''Foo
-labels ["x", "y"]
+-- Following line derives instances for various type classes and type
+-- families that are provided by the overloaded-records library.
+--
+-- However with def (default settings) this is done only for fields that
+-- start with type name, data constructor name, or underscore. Prefix is
+-- stripped. In example "v3x" is transformed in to "x" and so would be
+-- "_x".
+overloadedRecord def ''V3
 
-newtype Bar a = Bar {_bar :: a}
+data V4 a = V4
+    { v4x :: !a
+    , v4y :: !a
+    , v4z :: !a
+    , v4t :: !a
+    }
+  deriving Show
 
-overloadedRecord def ''Bar
-label "bar"
+overloadedRecord def ''V4
+
+zeroV3
+    :: (Num a, R ["x" ::: a, "y" ::: a, "z" ::: a] r)
+    => r -> r
+zeroV3 = set' #x 0 . set' #y 0 . set' #z 0
+```
+
+The following type signatures for @zeroV3@ are equivalent:
+
+```Haskell
+zeroV3
+    :: (Num a, R ["x" ::: a, "y" ::: a, "z" ::: a] r)
+    => r -> r
+```
+
+```Haskell
+zeroV3
+    ::  ( Num a
+        , ModifyField' "x" r a
+        , ModifyField' "y" r a
+        , ModifyField' "z" r a
+        )
+    => r -> r
+```
+
+One of the biggest features of *Overloaded Records* is the possibility to
+define functions that do not depend on concrete data types, but on the "fields"
+they provide. In example function @zeroV3@ can be applied to anything that has
+fields `"x"`, `"y"`, and `"z"` that reference values of some `Num` type:
+
+```Haskell
+λ> zeroV3 (V3 1 1 1 :: V3 Int)
+V3 {_x = 0, _y = 0, _z = 0}
+```
+
+```Haskell
+λ> zeroV3 (V4 1 1 1 1 :: V4 Int)
+V4 {_x = 0, _y = 0, _z = 0, _t = 1}
+```
+
+Function `zeroV3` can be also defined using operators from
+[lens][Hackage: lens] library:
+
+```Haskell
+zeroV3
+    :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+    => r -> r
+zeroV3 r = r
+    & \#x .~ 0
+    & \#y .~ 0
+    & \#z .~ 0
 ```
 
 
@@ -103,6 +193,9 @@ afraid to contact author using GitHub or by e-mail.
 [GHC Wiki: OverloadedRecordFields]:
   https://ghc.haskell.org/trac/ghc/wiki/Records/OverloadedRecordFields
   "OverloadedRecordFields language extension on GHC Wiki"
+[Hackage: lens]:
+  https://hackage.haskell.org/package/lens
+  "lens package on Hackage"
 [Hackage: overloaded-records]:
   http://hackage.haskell.org/package/overloaded-records
   "overloaded-records package on Hackage"
