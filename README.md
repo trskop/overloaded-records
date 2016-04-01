@@ -58,7 +58,7 @@ be found on [GHC Wiki: OverloadedRecordFields][].
 ## Usage Example
 
 Following is a more complex usage example that demonstrates some of the
-possibilities of /Overloaded Labels/ provided by this library.
+possibilities of *Overloaded Labels* provided by this library.
 
 ```Haskell
 -- Basic set of language extensions required when defining instances for
