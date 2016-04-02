@@ -18,6 +18,7 @@ Haskell functions for automatic deriving of instancess for `HasField` and
 directly as getters and lenses.
 
 ```Haskell
+import Data.Default (Default(def))
 import Data.OverloadedRecords.TH (overloadedRecord)
 
 newtype Bar a = Bar {_bar :: a}
