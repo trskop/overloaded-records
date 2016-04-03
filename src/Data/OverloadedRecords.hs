@@ -99,8 +99,8 @@ import Data.OverloadedLabels
 type family FieldType (l :: Symbol) (s :: *) :: *
 
 -- | If field @l :: Symbol@ of a record @s :: *@ is set to new value which has
--- type @a :: *@, then the modified record will have type @'UpdateType' l s a@.
-type family UpdateType (l :: Symbol) (s :: *) (a :: *) :: *
+-- type @b :: *@, then the modified record will have type @'UpdateType' l s b@.
+type family UpdateType (l :: Symbol) (s :: *) (b :: *) :: *
 
 -- | Definition of this class is based on:
 -- <https://phabricator.haskell.org/D1687>
@@ -221,7 +221,7 @@ instance IsFieldAccessor l x y (FromArrow x) => IsLabel l (x -> y) where
 -- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V3
 --
 -- setV3
---     :: 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r
+--     :: 'R' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r
 --     => a -> a -> a -> r -> r
 -- setV3 x y z = 'set'' \#x x . 'set'' \#y y . 'set'' \#z z
 -- @
@@ -339,7 +339,7 @@ set' m a = modify' m (const a)
 newtype Modifier s t a b = Modifier ((a -> b) -> s -> t)
   deriving (Generic, Typeable)
 
--- /Since 0.4.0.0/
+-- | /Since 0.4.0.0/
 instance (ModifyField l s t a b) => IsLabel l (Modifier s t a b) where
     fromLabel proxy = Modifier (modifyField proxy)
 
@@ -1110,7 +1110,7 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
 -- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V4
 --
 -- zeroV3
---     :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     :: (Num a, 'R' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
 --     => r -> r
 -- zeroV3 = 'set'' \#x 0 . 'set'' \#y 0 . 'set'' \#z 0
 -- @
@@ -1119,7 +1119,7 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
 --
 -- @
 -- zeroV3
---     :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     :: (Num a, 'R' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
 --     => r -> r
 -- @
 --
@@ -1149,11 +1149,13 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
 -- <https://hackage.haskell.org/package/lens lens> library:
 --
 -- @
+-- import Control.Lens ((.~), simple)
+--
 -- zeroV3
---     :: (Num a, 'R' [\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     :: (Num a, 'R' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
 --     => r -> r
 -- zeroV3 r = r
---     & \#x .~ 0
---     & \#y .~ 0
---     & \#z .~ 0
+--     & \#x . simple .~ 0
+--     & \#y . simple .~ 0
+--     & \#z . simple .~ 0
 -- @

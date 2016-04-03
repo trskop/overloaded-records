@@ -127,7 +127,7 @@ data V4 a = V4
 overloadedRecord def ''V4
 
 zeroV3
-    :: (Num a, R ["x" ::: a, "y" ::: a, "z" ::: a] r)
+    :: (Num a, R '["x" ::: a, "y" ::: a, "z" ::: a] r)
     => r -> r
 zeroV3 = set' #x 0 . set' #y 0 . set' #z 0
 ```
@@ -136,7 +136,7 @@ The following type signatures for `zeroV3` are equivalent:
 
 ```Haskell
 zeroV3
-    :: (Num a, R ["x" ::: a, "y" ::: a, "z" ::: a] r)
+    :: (Num a, R '["x" ::: a, "y" ::: a, "z" ::: a] r)
     => r -> r
 ```
 
@@ -169,13 +169,15 @@ Function `zeroV3` can be also defined using operators from
 [lens][Hackage: lens] library:
 
 ```Haskell
+import Control.Lens ((.~), simple)
+
 zeroV3
-    :: (Num a, R ["x" ::: a, "y" ::: a, "z" ::: a] r)
+    :: (Num a, R '["x" ::: a, "y" ::: a, "z" ::: a] r)
     => r -> r
 zeroV3 r = r
-    & #x .~ 0
-    & #y .~ 0
-    & #z .~ 0
+    & #x . simple .~ 0
+    & #y . simple .~ 0
+    & #z . simple .~ 0
 ```
 
 
