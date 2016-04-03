@@ -265,7 +265,7 @@ type (:::) (l :: Symbol) (a :: *) = '(l, a)
 -- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V3
 --
 -- zeroV3 :: 'Rec' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r -> r -> r
--- zeroV3 (Rec r) = 'set'' \#x 0 . 'set'' \#y 0 $ 'set'' \#z 0 r
+-- zeroV3 ('Rec' r) = 'set'' \#x 0 . 'set'' \#y 0 $ 'set'' \#z 0 r
 -- @
 --
 -- >>> zeroV3 (V3 1 1 1 :: V3 Int)
