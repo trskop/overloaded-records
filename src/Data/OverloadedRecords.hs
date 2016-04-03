@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -24,7 +25,7 @@
 -- Stability:    experimental
 -- Portability:  ConstraintKinds, DataKinds, DeriveDataTypeable, DeriveGeneric,
 --               FlexibleInstances, FlexibleContexts, FunctionalDependencies,
---               LambdaCase MagicHash, MultiParamTypeClasses,
+--               GADTs, LambdaCase, MagicHash, MultiParamTypeClasses,
 --               NoImplicitPrelude, RankNTypes, TypeFamilies, TypeOperators,
 --               UndecidableInstances
 --
@@ -56,6 +57,7 @@ module Data.OverloadedRecords
     , ModifyField(..)
     , R
     , (:::)
+    , Rec(..)
 
     , Setting
     , setting
@@ -242,6 +244,37 @@ type family R (ts :: [(Symbol, *)]) (r :: *) :: Constraint where
 --
 -- /Since 0.4.0.0/
 type (:::) (l :: Symbol) (a :: *) = '(l, a)
+
+-- | Pass polymorphic record as a value along with all necessary instances. By
+-- pattern matching on 'Rec' data constructor all those instances come in to
+-- scope.
+--
+-- Example:
+--
+-- @
+-- {-# LANGUAGE GADTs #-}
+--     -- Required in addition to the basic set of language extensions.
+--
+-- data V3 a = V3
+--     { _x :: a
+--     , _y :: a
+--     , _z :: a
+--     }
+--   deriving Show
+--
+-- 'Data.OverloadedRecords.TH.overloadedRecord' def ''V3
+--
+-- zeroV3 :: 'Rec' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r -> r -> r
+-- zeroV3 (Rec r) = 'set'' \#x 0 . 'set'' \#y 0 $ 'set'' \#z 0 r
+-- @
+--
+-- >>> zeroV3 (V3 1 1 1 :: V3 Int)
+-- V3 {_x = 0, _y = 0, _z = 0}
+--
+-- /Since 0.4.1.0/
+data Rec ts r where
+    Rec :: R ts r => r -> Rec ts r
+  deriving (Typeable)
 
 -- {{{ Getter -----------------------------------------------------------------
 

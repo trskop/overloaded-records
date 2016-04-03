@@ -5,6 +5,8 @@
 
 * Introducing `Getter` newtype along with `get` function. (**new**)
     * `get :: Getter s a -> s -> a`
+* Introducing `Rec` data type that allows passing polymorphic record along with
+  its instances as a normal value. (**new**)
 * Corrections and updates in documentation (**change**)
 * Uploaded to [Hackage][]:
   <http://hackage.haskell.org/package/overloaded-records-0.4.1.0>
