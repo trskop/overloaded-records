@@ -48,6 +48,9 @@ module Data.OverloadedRecords
     , FieldType
     , HasField(..)
 
+    , Getter
+    , get
+
     -- ** Setter and Modifier
     , UpdateType
     , ModifyField(..)
@@ -88,7 +91,7 @@ import Data.Maybe (Maybe(Just, Nothing))
 import Data.Proxy (Proxy)
 import Data.Typeable (Typeable)
 import GHC.Exts (Constraint, Proxy#)
-import GHC.Generics (Generic)
+import GHC.Generics (Generic, Generic1)
 import GHC.TypeLits (Symbol)
 
 import Data.OverloadedLabels
@@ -239,6 +242,40 @@ type family R (ts :: [(Symbol, *)]) (r :: *) :: Constraint where
 --
 -- /Since 0.4.0.0/
 type (:::) (l :: Symbol) (a :: *) = '(l, a)
+
+-- {{{ Getter -----------------------------------------------------------------
+
+-- | Provides alternative to the \"native\" 'IsLabel' instance for getter.
+-- Since mixing getter instance and lens instance for 'IsLabel' on polymorphic
+-- records is not possible, one may want to use 'Getter' as an alternative.
+--
+-- /Since 0.4.1.0/
+newtype Getter s a = Getter (s -> a)
+  deriving (Generic, Generic1, Typeable)
+
+-- | /Since 0.4.1.0/
+instance (HasField l s a) => IsLabel l (Getter s a) where
+    fromLabel proxy = Getter (getField proxy)
+
+-- | Extract a getter function from overloaded label.
+--
+-- Example:
+--
+-- @
+-- newtype Bar a = Bar {_bar :: a}
+--
+-- overloadedRecord ''Bar
+-- @
+--
+-- >>> get #bar (Bar False)
+-- False
+--
+-- /Since 0.4.1.0/
+get :: Getter s a -> s -> a
+get (Getter f) = f
+{-# INLINE get #-}
+
+-- }}} Getter -----------------------------------------------------------------
 
 -- {{{ Setter -----------------------------------------------------------------
 
@@ -1158,4 +1195,35 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
 --     & \#x . simple .~ 0
 --     & \#y . simple .~ 0
 --     & \#z . simple .~ 0
+-- @
+--
+-- However, following function would fail to compile:
+--
+-- @
+-- incV3
+--     :: (Num a, 'R' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     => r -> r
+-- incV3 r = r
+--     & \#x . simple .~ \#x r + 1
+--     & \#y . simple .~ \#y r + 1
+--     & \#z . simple .~ \#z r + 1
+-- @
+--
+-- The problem is that we have two 'IsLabel' instances at play. One is for a
+-- lens and the other one is for getter. Unfortunatelly these two instances are
+-- mutually exclusive in case of polymorphic value. There are multiple
+-- solutions to this. Use lenses all the time, e.g. in general by using @^.@
+-- for getting the value, or in this case by using @+~@ operator for
+-- incrementing. Example of using @+~@:
+--
+-- @
+-- import Control.Lens ((.~), (+~), simple)
+--
+-- incV3
+--     :: (Num a, 'R' '[\"x\" ':::' a, \"y\" ':::' a, \"z\" ':::' a] r)
+--     => r -> r
+-- incV3 r = r
+--     & \#x . simple +~ 1
+--     & \#y . simple +~ 1
+--     & \#z . simple +~ 1
 -- @

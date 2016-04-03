@@ -1,6 +1,15 @@
 # ChangeLog / ReleaseNotes
 
 
+## Version 0.4.1.0
+
+* Introducing `Getter` newtype along with `get` function. (**new**)
+    * `get :: Getter s a -> s -> a`
+* Corrections and updates in documentation (**change**)
+* Uploaded to [Hackage][]:
+  <http://hackage.haskell.org/package/overloaded-records-0.4.1.0>
+
+
 ## Version 0.4.0.0
 
 * Renamed `SetField` type class to `ModifyField`, it now contains following
