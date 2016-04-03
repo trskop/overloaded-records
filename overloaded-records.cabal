@@ -1,5 +1,5 @@
 name:                   overloaded-records
-version:                0.4.0.0
+version:                0.4.1.0
 synopsis:               Overloaded Records based on current GHC proposal.
 description:
   Implementation of /Overloaded Record Fields/ based on current GHC proposal.
@@ -78,6 +78,7 @@ library
     cpp-options:
       -DHAVE_MONAD_FAIL
       -DHAVE_OVERLOADED_LABELS
+--    -DHAVE_TYPE_FAMILY_DEPENDENCIES
 
   ghc-options:          -Wall
   if flag(pedantic)
@@ -148,6 +149,7 @@ test-suite unit-tests
     cpp-options:
       -DHAVE_MONAD_FAIL
       -DHAVE_OVERLOADED_LABELS
+--    -DHAVE_TYPE_FAMILY_DEPENDENCIES
 
   ghc-options:          -Wall
   if flag(pedantic)
@@ -163,4 +165,4 @@ source-repository head
 source-repository this
   type:                 git
   location:             git://github.com/trskop/overloaded-records.git
-  tag:                  0.4.0.0
+  tag:                  0.4.1.0
