@@ -252,8 +252,8 @@ type (:::) (l :: Symbol) (a :: *) = '(l, a)
 -- Example:
 --
 -- @
--- {-# LANGUAGE GADTs #-}
---     -- Required in addition to the basic set of language extensions.
+-- {-\# LANGUAGE GADTs \#-}
+--     -- May be required in addition to the basic set of language extensions.
 --
 -- data V3 a = V3
 --     { _x :: a
