@@ -1,6 +1,13 @@
 # ChangeLog / ReleaseNotes
 
 
+## Version 0.4.2.0
+
+* `Rec` instances for `Eq1`, `Ord1`, `Show1`, `Eq`, `Ord`, and `Show`.
+  Instances for `Eq1`, `Ord1` and `Show1` are available only with transformers
+  ==0.5.\* or with base >=4.9 (i.e. GHC >=8). (**new**)
+
+
 ## Version 0.4.1.0
 
 * Introducing `Getter` newtype along with `get` function. (**new**)

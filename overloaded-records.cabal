@@ -1,5 +1,5 @@
 name:                   overloaded-records
-version:                0.4.1.0
+version:                0.4.2.0
 synopsis:               Overloaded Records based on current GHC proposal.
 description:
   Implementation of /Overloaded Record Fields/ based on current GHC proposal.
