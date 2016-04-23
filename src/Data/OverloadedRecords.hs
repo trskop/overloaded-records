@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -15,6 +16,14 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
+#ifndef HAVE_FUNCTOR_CLASSES
+-- With Data.Functor.Classes available, we use Eq1, Ord1 and Show1 to define
+-- Eq, Ord and Show. When it is not available then we can use standalone
+-- deriving to get them derived for us.
+{-# LANGUAGE StandaloneDeriving #-}
+#endif
+
 -- |
 -- Module:       $HEADER$
 -- Description:  Magic classes for OverloadedRecordFields.
@@ -23,11 +32,12 @@
 --
 -- Maintainer:   peter.trsko@gmail.com
 -- Stability:    experimental
--- Portability:  ConstraintKinds, DataKinds, DeriveDataTypeable, DeriveGeneric,
---               FlexibleInstances, FlexibleContexts, FunctionalDependencies,
---               GADTs, LambdaCase, MagicHash, MultiParamTypeClasses,
---               NoImplicitPrelude, RankNTypes, TypeFamilies, TypeOperators,
---               UndecidableInstances
+-- Portability:  CPP, ConstraintKinds, DataKinds, DeriveDataTypeable,
+--               DeriveGeneric, FlexibleInstances, FlexibleContexts,
+--               FunctionalDependencies, GADTs, LambdaCase, MagicHash,
+--               MultiParamTypeClasses, NoImplicitPrelude, RankNTypes,
+--               StandaloneDeriving (transformers <0.5 && GHC <8),
+--               TypeFamilies, TypeOperators, UndecidableInstances
 --
 -- Magic classes for OverloadedRecordFields.
 --
@@ -95,6 +105,26 @@ import Data.Typeable (Typeable)
 import GHC.Exts (Constraint, Proxy#)
 import GHC.Generics (Generic, Generic1)
 import GHC.TypeLits (Symbol)
+
+#ifdef HAVE_FUNCTOR_CLASSES
+import Data.Eq (Eq((==)))
+import Data.Functor.Classes
+    ( Eq1(liftEq)
+    , Ord1(liftCompare)
+    , Show1(liftShowsPrec)
+    , compare1
+    , eq1
+    , showsPrec1
+    , showsUnaryWith
+    )
+import Data.Ord (Ord(compare))
+import Text.Show (Show(showsPrec))
+#else
+-- Will use StandaloneDeriving to derive instances for these.
+import Data.Eq (Eq)
+import Data.Ord (Ord)
+import Text.Show (Show)
+#endif
 
 import Data.OverloadedLabels
 
@@ -272,9 +302,36 @@ type (:::) (l :: Symbol) (a :: *) = '(l, a)
 -- V3 {_x = 0, _y = 0, _z = 0}
 --
 -- /Since 0.4.1.0/
-data Rec ts r where
-    Rec :: R ts r => r -> Rec ts r
+data Rec ctx r where
+    Rec :: R ctx r => r -> Rec ctx r
   deriving (Typeable)
+
+#ifdef HAVE_FUNCTOR_CLASSES
+instance Eq1 (Rec ctx) where
+    -- :: (a -> b -> Bool) -> f a -> f b -> Bool
+    liftEq f (Rec a) (Rec b) = f a b
+
+instance Ord1 (Rec ctx) where
+    -- :: (a -> b -> Ordering) -> f a -> f b -> Ordering
+    liftCompare f (Rec a) (Rec b) = f a b
+
+instance Show1 (Rec ctx) where
+    -- :: (Int -> a -> ShowS) -> ([a] -> ShowS) -> Int -> f a -> ShowS
+    liftShowsPrec sp _sl d (Rec r) = showsUnaryWith sp "Rec" d r
+
+instance Eq r => Eq (Rec ctx r) where
+    (==) = eq1
+
+instance Ord r => Ord (Rec ctx r) where
+    compare = compare1
+
+instance Show r => Show (Rec ctx r) where
+    showsPrec = showsPrec1
+#else
+deriving instance Eq r => Eq (Rec ctx r)
+deriving instance Ord r => Ord (Rec ctx r)
+deriving instance Show r => Show (Rec ctx r)
+#endif
 
 -- {{{ Getter -----------------------------------------------------------------
 

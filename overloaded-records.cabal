@@ -37,6 +37,13 @@ flag pedantic
   default:              False
   manual:               True
 
+flag force-functor-classes
+  description:
+    Force dependency on transformers ==0.5.* when compiled with GHC <8 to
+    define Eq1, Ord1 and Show1 instances for Rec data type.
+  default:              False
+  manual:               False
+
 library
   hs-source-dirs:       src
   exposed-modules:
@@ -74,8 +81,13 @@ library
     , data-default-class ==0.0.*
     , template-haskell >=2.9 && <2.12
 
+  if impl(ghc <8) && flag(force-functor-classes)
+    build-depends:      transformers ==0.5.*
+    cpp-options:        -DHAVE_FUNCTOR_CLASSES
+
   if impl(ghc >=8.0)
     cpp-options:
+      -DHAVE_FUNCTOR_CLASSES
       -DHAVE_MONAD_FAIL
       -DHAVE_OVERLOADED_LABELS
 --    -DHAVE_TYPE_FAMILY_DEPENDENCIES
@@ -139,14 +151,18 @@ test-suite unit-tests
 
     , overloaded-records
 
-  if impl(ghc <7.10)
-    -- Identity functor is available in base bundled with GHC >=7.10, for older
-    -- we need to get it elsewhere.
-    build-depends:
-      transformers >=0.2
+  if impl(ghc <8) && flag(force-functor-classes)
+    build-depends:      transformers ==0.5.*
+    cpp-options:        -DHAVE_FUNCTOR_CLASSES
+  else
+    if impl(ghc <7.10)
+      -- Identity functor is available in base bundled with GHC >=7.10, for
+      -- older we need to get it elsewhere.
+      build-depends:    transformers >=0.2
 
   if impl(ghc >=8.0)
     cpp-options:
+      -DHAVE_FUNCTOR_CLASSES
       -DHAVE_MONAD_FAIL
       -DHAVE_OVERLOADED_LABELS
 --    -DHAVE_TYPE_FAMILY_DEPENDENCIES
@@ -162,7 +178,7 @@ source-repository head
   type:                 git
   location:             git://github.com/trskop/overloaded-records.git
 
-source-repository this
-  type:                 git
-  location:             git://github.com/trskop/overloaded-records.git
-  tag:                  0.4.1.0
+--source-repository this
+--  type:                 git
+--  location:             git://github.com/trskop/overloaded-records.git
+--  tag:                  0.4.1.0
