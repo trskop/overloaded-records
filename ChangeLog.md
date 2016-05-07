@@ -6,6 +6,11 @@
 * `Rec` instances for `Eq1`, `Ord1`, `Show1`, `Eq`, `Ord`, and `Show`.
   Instances for `Eq1`, `Ord1` and `Show1` are available only with transformers
   ==0.5.\* or with base >=4.9 (i.e. GHC >=8). (**new**)
+* Introducing `WrappedLensLike` data type along with a simplified type
+  `WrappedLensLike'`. For each of these we have corresponding `lns` and `lns'`
+  operation for unpacking `WrappedLensLike`. (**new**)
+    * `lns :: WrappedLensLike f s t a b -> (a -> f b) -> s -> f t`
+    * `lns' :: WrappedLensLike' f s a -> (a -> f a) -> s -> f s`
 
 
 ## Version 0.4.1.0
