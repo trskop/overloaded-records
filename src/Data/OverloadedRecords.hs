@@ -62,7 +62,7 @@ module Data.OverloadedRecords
     , Getter
     , get
 
-    -- ** Setter and Modifier
+    -- ** Setter, Modifier and Lens
     , UpdateType
     , ModifyField(..)
     , R
@@ -75,10 +75,13 @@ module Data.OverloadedRecords
     , Setter
     , set
 
-    , Modifier
+    , Modifier(..)
     , modify
 
-    -- ** Simple Setter and Modifier
+    , WrappedLensLike(..)
+    , lns
+
+    -- ** Simple Setter, Modifier and Lens
     , ModifyField'
     , fieldLens'
     , modifyField'
@@ -89,6 +92,9 @@ module Data.OverloadedRecords
 
     , Modifier'
     , modify'
+
+    , WrappedLensLike'
+    , lns'
 
     -- ** IsLabel For Getter and Lens
     , FromArrow
@@ -490,6 +496,34 @@ modify' :: Modifier' s a -> (a -> a) -> s -> s
 modify' = modify
 
 -- }}} Modifier ---------------------------------------------------------------
+
+-- {{{ Lens -------------------------------------------------------------------
+
+-- | /Since 0.4.2.0/
+newtype WrappedLensLike f s t a b = WrappedLensLike ((a -> f b) -> s -> f t)
+
+-- | /Since 0.4.2.0/
+instance
+    ( Functor f
+    , ModifyField l s t a b
+    ) => IsLabel l (WrappedLensLike f s t a b)
+  where
+    fromLabel proxy = WrappedLensLike (fieldLens proxy)
+
+-- | /Since 0.4.2.0/
+type WrappedLensLike' f s a = WrappedLensLike f s s a a
+
+-- | /Since 0.4.2.0/
+lns :: WrappedLensLike f s t a b -> (a -> f b) -> s -> f t
+lns (WrappedLensLike l) = l
+{-# INLINE lns #-}
+
+-- | /Since 0.4.2.0/
+lns' :: WrappedLensLike' f s a -> (a -> f a) -> s -> f s
+lns' (WrappedLensLike l) = l
+{-# INLINE lns' #-}
+
+-- }}} Lens -------------------------------------------------------------------
 
 -- {{{ Instances --------------------------------------------------------------
 
