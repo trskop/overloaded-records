@@ -1,5 +1,5 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -12,6 +12,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -32,12 +33,7 @@
 --
 -- Maintainer:   peter.trsko@gmail.com
 -- Stability:    experimental
--- Portability:  CPP, ConstraintKinds, DataKinds, DeriveDataTypeable,
---               DeriveGeneric, FlexibleInstances, FlexibleContexts,
---               FunctionalDependencies, GADTs, LambdaCase, MagicHash,
---               MultiParamTypeClasses, NoImplicitPrelude, RankNTypes,
---               StandaloneDeriving (transformers <0.5 && GHC <8),
---               TypeFamilies, TypeOperators, UndecidableInstances
+-- Portability:  GHC specific language extensions.
 --
 -- Magic classes for OverloadedRecordFields.
 --
@@ -81,6 +77,11 @@ module Data.OverloadedRecords
     , WrappedLensLike(..)
     , lns
 
+    , ModifyRec(..)
+    , weakenRec
+    , strengthenRec
+    , Position
+
     -- ** Simple Setter, Modifier and Lens
     , ModifyField'
     , fieldLens'
@@ -103,14 +104,15 @@ module Data.OverloadedRecords
   where
 
 import Data.Bool (Bool(False, True))
-import Data.Function (const)
+import Data.Function (($), const)
 import Data.Functor (Functor, (<$>))
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Proxy (Proxy)
+import Data.Type.Equality (type (==))
 import Data.Typeable (Typeable)
-import GHC.Exts (Constraint, Proxy#)
+import GHC.Exts (Constraint, Proxy#, proxy#)
 import GHC.Generics (Generic, Generic1)
-import GHC.TypeLits (Symbol)
+import GHC.TypeLits (type (-), type (+), Nat, Symbol)
 
 #ifdef HAVE_FUNCTOR_CLASSES
 import Data.Eq (Eq((==)))
@@ -312,6 +314,14 @@ data Rec ctx r where
     Rec :: R ctx r => r -> Rec ctx r
   deriving (Typeable)
 
+-- | Weakening a record constraint.
+weakenRec :: Rec ((l ::: a) ': ctx) r -> Rec ctx r
+weakenRec (Rec r) = Rec r
+
+-- | Strengthening a record constraint.
+strengthenRec :: ModifyField' l r a => Rec ctx r -> Rec ((l ::: a) ': ctx) r
+strengthenRec (Rec r) = Rec r
+
 #ifdef HAVE_FUNCTOR_CLASSES
 instance Eq1 (Rec ctx) where
     -- :: (a -> b -> Bool) -> f a -> f b -> Bool
@@ -338,6 +348,39 @@ deriving instance Eq r => Eq (Rec ctx r)
 deriving instance Ord r => Ord (Rec ctx r)
 deriving instance Show r => Show (Rec ctx r)
 #endif
+
+class ModifyRec (l :: Symbol) a (cs :: [(Symbol, *)]) (n :: Nat) (b :: Bool)
+  where
+    getRecField :: Proxy# '(n, b) -> Proxy# l -> Rec cs r -> a
+
+    modifyRecField
+        :: Proxy# '(n, b) -> Proxy# l -> (a -> a) -> Rec cs r -> Rec cs r
+
+    setRecField :: Proxy# '(n, b) -> Proxy# l -> Rec cs r -> a -> Rec cs r
+
+instance (cs ~ ((l ::: a) ': cs')) => ModifyRec l a cs 0 'True where
+    getRecField _ p (Rec r) = getField p r
+    modifyRecField _ p f (Rec r) = Rec (modifyField p f r)
+    setRecField _ p (Rec r) a = Rec (setField p r a)
+
+instance
+    ( cs ~ ((l' ::: b) ': cs')
+    , n' ~ (n - 1)
+    , ModifyRec l a cs' n' (n' == 0)
+    ) => ModifyRec l a cs n 'False
+  where
+    getRecField _ p r =
+        getRecField (proxy# :: Proxy# '(n', n' == 0)) p (weakenRec r)
+
+    modifyRecField _ p f r@(Rec _) = strengthenRec
+        $ modifyRecField (proxy# :: Proxy# '(n', n' == 0)) p f (weakenRec r)
+
+    setRecField _ p r@(Rec _) a = strengthenRec
+        $ setRecField (proxy# :: Proxy# '(n', n' == 0)) p (weakenRec r) a
+
+type family Position (l :: Symbol) (a :: *) (cs :: [(Symbol, *)]) :: Nat where
+    Position l a ('(l, a) ': cs)  = 0
+    Position l a (any     ': cs)  = 1 + (Position l a cs)
 
 -- {{{ Getter -----------------------------------------------------------------
 
