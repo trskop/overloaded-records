@@ -62,6 +62,7 @@ module Data.OverloadedRecords
     , UpdateType
     , ModifyField(..)
     , R
+    , Rs
     , (:::)
     , Rec(..)
 
@@ -277,6 +278,13 @@ type family R (ts :: [(Symbol, *)]) (r :: *) :: Constraint where
     R '[] r             = ()
     R ('(l, a) ': ts) r = (ModifyField' l r a, R ts r)
 
+-- | Union\/concatenation of record constraints.
+--
+-- /Since 0.4.2.0/
+type family Rs (cs :: [[(Symbol, *)]]) (r :: *) where
+    Rs '[]       r = R '[] r
+    Rs (c ': cs) r = (R c r, Rs cs r)
+
 -- | This type alias is used for more readable type signatures when using 'R'
 -- type family.
 --
@@ -380,7 +388,7 @@ instance
 
 type family Position (l :: Symbol) (a :: *) (cs :: [(Symbol, *)]) :: Nat where
     Position l a ('(l, a) ': cs)  = 0
-    Position l a (any     ': cs)  = 1 + (Position l a cs)
+    Position l a (any     ': cs)  = 1 + Position l a cs
 
 -- {{{ Getter -----------------------------------------------------------------
 
