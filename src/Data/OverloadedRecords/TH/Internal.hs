@@ -82,7 +82,7 @@ module Data.OverloadedRecords.TH.Internal
     )
   where
 
-import Prelude (Num((-)), fromIntegral, fst, unzip, lookup, Eq((==)))
+import Prelude (Num((-)), fromIntegral)
 
 import Control.Applicative (Applicative((<*>)))
 import Control.Arrow (Arrow((***)))
@@ -94,6 +94,7 @@ import Control.Monad.Fail (MonadFail(fail))
 #endif
 import Data.Bool (Bool(False), otherwise)
 import qualified Data.Char as Char (toLower)
+import Data.Eq (Eq((==)))
 import Data.Foldable (concat, foldl)
 import Data.Function ((.), ($), flip)
 import Data.Functor (Functor(fmap), (<$>))
@@ -104,11 +105,14 @@ import qualified Data.List as List
     , map
     , replicate
     , zip
+    , lookup
+    , unzip
     )
 import Data.Maybe (Maybe(Just, Nothing), fromMaybe, catMaybes)
 import Data.Monoid ((<>))
 import Data.String (String)
 import Data.Traversable (mapM, sequence)
+import Data.Tuple (fst)
 import Data.Typeable (Typeable)
 import Data.Word (Word)
 import GHC.Generics (Generic)
@@ -345,10 +349,12 @@ overloadedRecord params = withReified $ \name -> \case
 #endif
             fst $ foldl go (return [], []) constructors
           where
-            go :: (DecsQ, [(String, String)]) -> Con -> (DecsQ, [(String, String)])
+            go  :: (DecsQ, [(String, String)])
+                -> Con
+                -> (DecsQ, [(String, String)])
             go (decs, seen) con =
                 let (decs', seen') =
-                      deriveForConstructor params seen typeName typeVars con
+                        deriveForConstructor params seen typeName typeVars con
                 in ((<>) <$> decs <*> decs', seen <> seen')
         x -> canNotDeriveError name x
 
@@ -450,8 +456,10 @@ deriveForConstructor params seen name typeVars = \case
     deriveFor
         :: Name
         -> [a]
-        -> (a -> (Maybe Name -> Strict -> Type -> (DecsQ, Maybe (String, String)))
-              -> (DecsQ, Maybe (String, String)))
+        ->  ( a
+            -> (Maybe Name -> Strict -> Type -> (DecsQ, Maybe (String, String)))
+            -> (DecsQ, Maybe (String, String))
+            )
         -> (DecsQ, [(String, String)])
     deriveFor constrName args f =
         concatBoth . flip fmap (withIndexes args) $ \(idx, arg) ->
@@ -473,7 +481,7 @@ deriveForConstructor params seen name typeVars = \case
             KindedTV n _kind -> n
 
         concatBoth :: [(Q [a], Maybe b)] -> (Q [a], [b])
-        concatBoth = (fmap concat . sequence *** catMaybes) . unzip
+        concatBoth = (fmap concat . sequence *** catMaybes) . List.unzip
 
     withIndexes = List.zip [(0 :: Word) ..]
 
@@ -512,39 +520,20 @@ deriveForField
     -- ^ All the necessary information for derivation procedure.
     -> (DecsQ, Maybe (String, String))
     -- If instances were generated, then the second part is a pair
-    -- (instanceLabel, fieldLabel)
+    -- (instanceLabel, fieldLabel), i.e. witness of defined of created
+    -- instance. It's later used to ideintify duplicities.
 deriveForField params seen DeriveFieldParams{..} =
     case possiblyLabel of
         Nothing -> (return [], Nothing)
+
         Just (GetterOnlyField label customGetterExpr) ->
-            case lookup label seen of
-                Just from ->
-                    if Just from == accessorBase then
-                        (return [],
-                         Nothing)
-                    else
-                        (fail $ "Two different fields map to label \""
-                                <> from <> "\"",
-                         Nothing)
-                Nothing ->
-                    (deriveGetter' (strTyLitT label)
-                        $ fromMaybe derivedGetterExpr customGetterExpr,
-                     (,) label <$> accessorBase)
+            ifNotSeenAlreadyThenDo label . deriveGetter' (strTyLitT label)
+                $ fromMaybe derivedGetterExpr customGetterExpr
+
         Just (GetterAndSetterField label customGetterAndSetterExpr) ->
-            case lookup label seen of
-                Just from ->
-                    if Just from == accessorBase then
-                        (return [],
-                         Nothing)
-                    else
-                        (fail $ "Two different fields map to label \""
-                                <> from <> "\"",
-                         Nothing)
-                Nothing ->
-                    ((<>)
-                        <$> deriveGetter' labelType getterExpr
-                        <*> deriveSetter' labelType setterExpr,
-                     (,) label <$> accessorBase)
+            ifNotSeenAlreadyThenDo label $ (<>)
+                <$> deriveGetter' labelType getterExpr
+                <*> deriveSetter' labelType setterExpr
           where
             labelType = strTyLitT label
 
@@ -553,6 +542,23 @@ deriveForField params seen DeriveFieldParams{..} =
                     customGetterAndSetterExpr
   where
     accessorBase = fmap nameBase accessorName
+
+    ifNotSeenAlreadyThenDo
+        :: String
+        -> DecsQ
+        -> (DecsQ, Maybe (String, String))
+    ifNotSeenAlreadyThenDo label action =
+        case List.lookup label seen of
+            x@(Just from)
+              -- Same instance, for the same accessor was already defined,
+              -- skipping.
+              | x == accessorBase -> (return [],              Nothing)
+              -- Two different accessors with the same name, this is not resovable.
+              | otherwise         -> (nameConflictError from, Nothing)
+            Nothing -> (action, (,) label <$> accessorBase)
+
+    nameConflictError n =
+        fail $ "Two different fields map to the same label \"" <> n <> "\""
 
     possiblyLabel = _fieldDerivation params (nameBase typeName)
         (nameBase constructorName) currentIndex accessorBase

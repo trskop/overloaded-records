@@ -11,6 +11,10 @@
   operation for unpacking `WrappedLensLike`. (**new**)
     * `lns :: WrappedLensLike f s t a b -> (a -> f b) -> s -> f t`
     * `lns' :: WrappedLensLike' f s a -> (a -> f a) -> s -> f s`
+* Allowing fields\/accessors to occur in multiple data constructors by not
+  creating duplicit instances, thanks to
+  [Andy Morris](https://github.com/andy-morris). See
+  [pull request #2](https://github.com/trskop/overloaded-records/pull/2).
 
 
 ## Version 0.4.1.0
