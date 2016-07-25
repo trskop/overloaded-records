@@ -79,7 +79,14 @@ instance ModifyField "fst" (Pair a b) (Pair a' b) a a' where
 instance ModifyField "snd" (Pair a b) (Pair a b') b b' where
     setField _proxy (Pair a _) b' = Pair a b'
 
-labels ["fst", "snd", "head", "tail"]
+-- {{{ Test, that we can have same accessor for multiple constructors.
+data AB = A {_size :: Int} | B {_size :: Int}
+  deriving (Eq, Show)
+
+overloadedRecord def ''AB
+-- }}} Test, that we can have same accessor for multiple constructors.
+
+labels ["fst", "snd", "head", "tail", "size"]
 
 tests :: [Test]
 tests =
@@ -175,6 +182,16 @@ tests =
         , testCase "[1, 2, 3] & simple . #tail .~ Just [4, 5, 6] = [1, 4, 5, 6]"
             $ ([1, 2, 3] & simple . tail .~ Just [4, 5, 6])
                 @?= [1, 4, 5, 6 :: Int]
+        ]
+
+    -- Mostly just a sanity check that instances for AB work correctly.
+    , testGroup "#tail for data AB = A {_size :: Int} | B {_size :: Int}"
+        [ testCase "#size (A 10) = 10" $ size (A 10) @?= 10
+        , testCase "A 10 & simple . #size .~ 42 = A 42"
+            $ (A 10 & simple . size .~ 42) @?= A 42
+        , testCase "#size (B 10) = 10" $ size (B 10) @?= 10
+        , testCase "B 10 & simple . #size .~ 42 = A 42"
+            $ (B 10 & simple . size .~ 42) @?= B 42
         ]
     ]
   where
