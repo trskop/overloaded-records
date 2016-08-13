@@ -317,6 +317,13 @@ type (:::) (l :: Symbol) (a :: *) = '(l, a)
 -- >>> zeroV3 (V3 1 1 1 :: V3 Int)
 -- V3 {_x = 0, _y = 0, _z = 0}
 --
+-- Difference between using a constraint, via 'R' type family, and using 'Rec',
+-- is that 'Rec' retains run-time proof that the record has a specified fields.
+-- More about this distinction can be found for example in
+-- /Hasochism: The Pleasure and Pain of Dependently Typed Haskell Programming/
+-- by /Sam Lindley/ and /Conor McBride/ available on-line
+-- <https://personal.cis.strath.ac.uk/conor.mcbride/pub/hasochism.pdf>.
+--
 -- /Since 0.4.1.0/
 data Rec ctx r where
     Rec :: R ctx r => r -> Rec ctx r
@@ -357,38 +364,78 @@ deriving instance Ord r => Ord (Rec ctx r)
 deriving instance Show r => Show (Rec ctx r)
 #endif
 
-class ModifyRec (l :: Symbol) a (cs :: [(Symbol, *)]) (n :: Nat) (b :: Bool)
+-- | Internal implementation of 'ModifyRec' type class. There should be no need
+-- to use it directly or to add an instance to it.
+class ModifyRec# (l :: Symbol) a (cs :: [(Symbol, *)]) (n :: Nat) (b :: Bool)
   where
-    getRecField :: Proxy# '(n, b) -> Proxy# l -> Rec cs r -> a
+    getRecField# :: Proxy# '(n, b) -> Proxy# l -> Rec cs r -> a
 
-    modifyRecField
+    modifyRecField#
         :: Proxy# '(n, b) -> Proxy# l -> (a -> a) -> Rec cs r -> Rec cs r
 
-    setRecField :: Proxy# '(n, b) -> Proxy# l -> Rec cs r -> a -> Rec cs r
+    setRecField# :: Proxy# '(n, b) -> Proxy# l -> Rec cs r -> a -> Rec cs r
 
-instance (cs ~ ((l ::: a) ': cs')) => ModifyRec l a cs 0 'True where
-    getRecField _ p (Rec r) = getField p r
-    modifyRecField _ p f (Rec r) = Rec (modifyField p f r)
-    setRecField _ p (Rec r) a = Rec (setField p r a)
+    -- TODO:
+    --
+    -- Find a way how to do type changing modification and assignment:
+    --
+    --   modifyRecField#
+    --       :: Proxy# '(n, nb) -> Proxy# l -> (a -> b) -> Rec cs r -> Rec cs s
+    --
+    --   setRecField#
+    --       :: Proxy# '(n, nb) -> Proxy# l -> Rec cs r -> b -> Rec cs s
+    --
+    -- This would probably require to construct new record constraint with the
+    -- member (l, a) changed to (l, b).
+
+instance (cs ~ ((l ::: a) ': cs')) => ModifyRec# l a cs 0 'True where
+    getRecField# _ p (Rec r) = getField p r
+    modifyRecField# _ p f (Rec r) = Rec (modifyField p f r)
+    setRecField# _ p (Rec r) a = Rec (setField p r a)
 
 instance
     ( cs ~ ((l' ::: b) ': cs')
     , n' ~ (n - 1)
-    , ModifyRec l a cs' n' (n' == 0)
-    ) => ModifyRec l a cs n 'False
+    , ModifyRec# l a cs' n' (n' == 0)
+    ) => ModifyRec# l a cs n 'False
   where
-    getRecField _ p r =
-        getRecField (proxy# :: Proxy# '(n', n' == 0)) p (weakenRec r)
+    getRecField# _ p r =
+        getRecField# (proxy# :: Proxy# '(n', n' == 0)) p (weakenRec r)
 
-    modifyRecField _ p f r@(Rec _) = strengthenRec
-        $ modifyRecField (proxy# :: Proxy# '(n', n' == 0)) p f (weakenRec r)
+    modifyRecField# _ p f r@(Rec _) = strengthenRec
+        $ modifyRecField# (proxy# :: Proxy# '(n', n' == 0)) p f (weakenRec r)
 
-    setRecField _ p r@(Rec _) a = strengthenRec
-        $ setRecField (proxy# :: Proxy# '(n', n' == 0)) p (weakenRec r) a
+    setRecField# _ p r@(Rec _) a = strengthenRec
+        $ setRecField# (proxy# :: Proxy# '(n', n' == 0)) p (weakenRec r) a
 
+-- | Calculate position of @(l :: Symbol, a :: *)@ in type level list @(cs ::
+-- [(Symbol, *)])@. It is used to move through type level list via the type
+-- class instance chain until the correct element is reached.
 type family Position (l :: Symbol) (a :: *) (cs :: [(Symbol, *)]) :: Nat where
     Position l a ('(l, a) ': cs)  = 0
     Position l a (any     ': cs)  = 1 + Position l a cs
+
+-- | This type class provides functionality as 'HasField' and 'ModifyField',
+-- but for overloaded records wrapped in 'Rec' type.
+class
+    ( ModifyRec# l a cs (Position l a cs) (Position l a cs == 0)
+    ) => ModifyRec (l :: Symbol) a (cs :: [(Symbol, *)])
+  where
+    getRecField :: Proxy# l -> Rec cs r -> a
+    getRecField = getRecField#
+        (proxy# :: Proxy# '(Position l a cs, Position l a cs == 0))
+
+    modifyRecField :: Proxy# l -> (a -> a) -> Rec cs r -> Rec cs r
+    modifyRecField = modifyRecField#
+        (proxy# :: Proxy# '(Position l a cs, Position l a cs == 0))
+
+    setRecField :: Proxy# l -> Rec cs r -> a -> Rec cs r
+    setRecField = setRecField#
+        (proxy# :: Proxy# '(Position l a cs, Position l a cs == 0))
+
+instance
+    ( ModifyRec# l a cs (Position l a cs) (Position l a cs == 0)
+    ) => ModifyRec l a cs
 
 -- {{{ Getter -----------------------------------------------------------------
 
@@ -1204,6 +1251,7 @@ instance ModifyField "head" [a] [a] (Maybe a) (Maybe a) where
 
 -- | /Since 0.4.0.0/
 type instance FieldType "tail" [a] = Maybe [a]
+
 -- | /Since 0.4.0.0/
 type instance UpdateType "tail" [a] (Maybe [a]) = [a]
 

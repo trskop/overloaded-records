@@ -170,7 +170,9 @@ import Data.OverloadedLabels (IsLabel(fromLabel))
 import Data.OverloadedRecords
     ( FieldType
     , HasField(getField)
-    , ModifyField(setField)
+    , ModifyField(modifyField, setField)
+    , ModifyRec(getRecField, modifyRecField, setRecField)
+    , Rec
     , UpdateType
     )
 
@@ -674,6 +676,12 @@ deriveGetter labelType recordType fieldType getter =
 
         instance HasField $(labelType) $(recordType) $(fieldType) where
             getField _proxy = $(getter)
+
+        instance
+            ( ModifyRec $(labelType) $(fieldType) cs
+            ) => HasField $(labelType) (Rec cs $(recordType)) $(fieldType)
+          where
+            getField = getRecField
     |]
 
 -- | Derive instances for overloaded record field setter. Same as
@@ -720,6 +728,15 @@ deriveSetter labelType recordType fieldType newRecordType newFieldType setter =
                 $(fieldType) $(newFieldType)
           where
             setField _proxy = $(setter)
+
+        -- TODO: Type changing assignment and modification.
+        instance
+            ( ModifyRec $(labelType) $(fieldType) cs
+            ) => ModifyField $(labelType) (Rec cs $(recordType))
+                (Rec cs $(recordType)) $(fieldType) $(fieldType)
+          where
+            setField = setRecField
+            modifyField = modifyRecField
     |]
 
 -- | Construct list of wildcard patterns ('WildP').
