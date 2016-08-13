@@ -1196,6 +1196,323 @@ instance
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
+-- | /Since 0.4.2.0/
+instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a1 where
+    getField _proxy (a1, _, _, _, _, _, _, _, _, _, _) = a1
+
+-- | /Since 0.4.2.0/
+instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a2 where
+    getField _proxy (_, a2, _, _, _, _, _, _, _, _, _) = a2
+
+-- | /Since 0.4.2.0/
+instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a3 where
+    getField _proxy (_, _, a3, _, _, _, _, _, _, _, _) = a3
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+    setField _proxy (_, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+    setField _proxy (a1, _, a3, a4, a5, a6, a7, a8, a9, a10, a11) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8, a9, a10, a11)
+    setField _proxy (a1, a2, _, a4, a5, a6, a7, a8, a9, a10, a11) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) -> r)
+        (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> r)
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- | /Since 0.4.2.0/
+instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a1
+  where
+    getField _proxy (a1, _, _, _, _, _, _, _, _, _, _, _) = a1
+
+-- | /Since 0.4.2.0/
+instance HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a2
+  where
+    getField _proxy (_, a2, _, _, _, _, _, _, _, _, _, _) = a2
+
+-- | /Since 0.4.2.0/
+instance HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a3
+  where
+    getField _proxy (_, _, a3, _, _, _, _, _, _, _, _, _) = a3
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a1 a1'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+    setField _proxy (_, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a2 a2'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+    setField _proxy (a1, _, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12) a3 a3'
+  where
+    modifyField _proxy f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+    setField _proxy (a1, a2, _, a4, a5, a6, a7, a8, a9, a10, a11, a12) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "curry" ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) -> r)
+        ( a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11
+        -> a12 -> r
+        )
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a1
+  where
+    getField _proxy (a1, _, _, _, _, _, _, _, _, _, _, _, _) = a1
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a2
+  where
+    getField _proxy (_, a2, _, _, _, _, _, _, _, _, _, _, _) = a2
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a3
+  where
+    getField _proxy (_, _, a3, _, _, _, _, _, _, _, _, _, _) = a3
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a1 a1'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+    setField _proxy
+      (_, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "snd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a2 a2'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+    setField _proxy
+      (a1, _, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "thd" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a3 a3'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+    setField _proxy
+      (a1, a2, _, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "curry"
+        ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) -> r)
+        ( a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11
+        -> a12 -> a13 -> r
+        )
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "fst"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a1
+  where
+    getField _proxy (a1, _, _, _, _, _, _, _, _, _, _, _, _, _) = a1
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "snd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a2
+  where
+    getField _proxy (_, a2, _, _, _, _, _, _, _, _, _, _, _, _) = a2
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "thd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a3
+  where
+    getField _proxy (_, _, a3, _, _, _, _, _, _, _, _, _, _, _) = a3
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "fst"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a1 a1'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+    setField _proxy
+      (_, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "snd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a2 a2'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+    setField _proxy
+      (a1, _, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "thd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a3 a3'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+    setField _proxy
+      (a1, a2, _, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "curry"
+        ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) -> r)
+        ( a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11
+        -> a12 -> a13 -> a14 -> r
+        )
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "fst"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a1
+  where
+    getField _proxy (a1, _, _, _, _, _, _, _, _, _, _, _, _, _, _) = a1
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "snd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a2
+  where
+    getField _proxy (_, a2, _, _, _, _, _, _, _, _, _, _, _, _, _) = a2
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "thd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a3
+  where
+    getField _proxy (_, _, a3, _, _, _, _, _, _, _, _, _, _, _, _) = a3
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "fst"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+        a1 a1'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) =
+        (f a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+    setField _proxy
+      (_, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a1 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "snd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+        a2 a2'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) =
+        (a1, f a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+    setField _proxy
+      (a1, _, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a2 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
+-- | /Since 0.4.2.0/
+instance
+    ModifyField "thd"
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+        a3 a3'
+  where
+    modifyField _proxy f
+      (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) =
+        (a1, a2, f a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+    setField _proxy
+      (a1, a2, _, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a3 =
+        (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
+-- | /Since 0.4.2.0/
+instance
+    HasField "curry"
+        ( (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+        -> r
+        )
+        ( a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11
+        -> a12 -> a13 -> a14 -> a15 -> r
+        )
+  where
+    getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 =
+        f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
 -- }}} Instances -- Tuples ----------------------------------------------------
 
 -- {{{ Instances -- Lists -----------------------------------------------------
