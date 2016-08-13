@@ -164,6 +164,7 @@ test-suite unit-tests
     cpp-options:
       -DHAVE_FUNCTOR_CLASSES
       -DHAVE_MONAD_FAIL
+      -DHAVE_NON_EMPTY_LIST
       -DHAVE_OVERLOADED_LABELS
 --    -DHAVE_TYPE_FAMILY_DEPENDENCIES
 

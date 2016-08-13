@@ -135,6 +135,10 @@ import Data.Ord (Ord)
 import Text.Show (Show)
 #endif
 
+#ifdef HAVE_NON_EMPTY_LIST
+import Data.List.NonEmpty (NonEmpty((:|)))
+#endif
+
 import Data.OverloadedLabels
 
 
@@ -1616,6 +1620,74 @@ instance ModifyField "tail" [a] [a] (Maybe [a]) (Maybe [a]) where
             Just as -> a : as
 
 -- }}} Instances -- Lists -----------------------------------------------------
+
+#ifdef HAVE_NON_EMPTY_LIST
+-- {{{ Instances -- Non-empty Lists -------------------------------------------
+
+-- | /Since 0.4.2.0/
+type instance FieldType "head" (NonEmpty a) = a
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "head" (NonEmpty a) a = NonEmpty a
+
+-- |
+-- >>> #head 1 :| []
+-- 1
+--
+-- >>> #head (1 :| [2, 3])
+-- 1
+--
+-- /Since 0.4.2.0/
+instance HasField "head" (NonEmpty a) a where
+    getField _proxy (a :| _) = a
+
+-- |
+-- >>> set' #head [1, 2, 3] 4
+-- [4, 2, 3]
+--
+-- /Since 0.4.2.0/
+instance ModifyField "head" (NonEmpty a) (NonEmpty a) a a where
+    modifyField _proxy f (a :| as) = f a :| as
+    setField _proxy (_ :| as) a = a :| as
+
+-- | /Since 0.4.2.0/
+type instance FieldType "tail" (NonEmpty a) = [a]
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "tail" (NonEmpty a) [a] = NonEmpty a
+
+-- |
+-- >>> #tail (1 :| [])
+-- []
+--
+-- >>> #tail (1 :| [2, 3])
+-- [2, 3]
+--
+-- /Since 0.4.2.0/
+instance HasField "tail" (NonEmpty a) [a] where
+    getField _proxy (_ :| as) = as
+
+-- |
+-- >>> set' #tail (1 :| []) []
+-- (1 :| [])
+--
+-- >>> set' #tail (1 :| []) [2, 3]
+-- 1 :| [2, 3]
+--
+-- >>> set' #tail (1 :| [2, 3]) []
+-- 1 :| []
+--
+-- >>> set' #tail (1 :| [2, 3]) [4, 5, 6]
+-- 1 :| [4, 5, 6]
+--
+-- /Since 0.4.2.0/
+instance ModifyField "tail" (NonEmpty a) (NonEmpty a) [a] [a] where
+    modifyField _proxy f (a :| as) = a :| f as
+    setField _proxy (a :| _) as = a :| as
+
+-- }}} Instances -- Non-empty Lists -------------------------------------------
+#endif
+    -- HAVE_NON_EMPTY_LIST
 
 -- }}} Instances --------------------------------------------------------------
 
