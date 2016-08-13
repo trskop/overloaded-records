@@ -193,6 +193,15 @@ Contributions, pull requests and bug reports are welcome! Please don't be
 afraid to contact author using GitHub or by e-mail.
 
 
+## Related Work
+
+* [ruin][Hackage: ruin] is a DSL for working with record types that also
+  leverages OverloadedLabels language extension.
+* [vinyl][Hackage: vinyl] provides extensible records for Haskell with lenses
+  using modern GHC features.
+
+
+
 [GHC Wiki: OverloadedRecordFields]:
   https://ghc.haskell.org/trac/ghc/wiki/Records/OverloadedRecordFields
   "OverloadedRecordFields language extension on GHC Wiki"
@@ -202,6 +211,12 @@ afraid to contact author using GitHub or by e-mail.
 [Hackage: overloaded-records]:
   http://hackage.haskell.org/package/overloaded-records
   "overloaded-records package on Hackage"
+[Hackage: ruin]:
+  https://hackage.haskell.org/package/ruin
+  "ruin package on Hackage"
+[Hackage: vinyl]:
+  https://hackage.haskell.org/package/vinyl
+  "vinyl package on Hackage"
 [Haskell.org]:
   http://www.haskell.org
   "The Haskell Programming Language"
