@@ -49,7 +49,15 @@ module Data.OverloadedLabels
 import Data.Function ((.), id)
 import Data.String (String)
 import Data.Typeable (Typeable)
-import GHC.TypeLits (KnownSymbol, Symbol, symbolVal')
+import GHC.TypeLits
+    ( KnownSymbol
+    , Symbol
+#if MIN_VERSION_base(4,8,0)
+    , symbolVal'
+#else
+    , symbolVal
+#endif
+    )
 import GHC.Exts (Proxy#)
 import Text.Show (Show(show, showsPrec), showChar, showString)
 
@@ -70,7 +78,13 @@ data Label (l :: Symbol) = Label (Proxy# l)
 -- |
 -- /Since 0.4.2.0/
 instance KnownSymbol l => Show (Label l) where
-    showsPrec _ (Label p) = showChar '#' . showString (symbolVal' p)
+    showsPrec _ l = showChar '#' . showString (showLabel' l)
+      where
+#if MIN_VERSION_base(4,8,0)
+        showLabel' (Label p) = symbolVal' p
+#else
+        showLabel' = symbolVal
+#endif
 
 -- |
 -- /Since 0.4.2.0/
