@@ -631,6 +631,8 @@ lns' (WrappedLensLike l) = l
 
 -- {{{ Instances -- Tuples ----------------------------------------------------
 
+-- {{{ Instances -- Tuples -- 2-tuple (pair) ----------------------------------
+
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a, b) = a
 
@@ -667,6 +669,10 @@ instance ModifyField "fst" (a, b) (a', b) a a' where
 instance ModifyField "snd" (a, b) (a, b') b b' where
     modifyField _proxy f (a, b) = (a, f b)
     setField _proxy (a, _) b = (a, b)
+
+-- }}} Instances -- Tuples -- 2-tuple (pair) ----------------------------------
+
+-- {{{ Instances -- Tuples -- 3-tuple (triplet) -------------------------------
 
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a, b, c) = a
@@ -719,6 +725,10 @@ instance ModifyField "snd" (a, b, c) (a, b', c) b b' where
 instance ModifyField "thd" (a, b, c) (a, b, c') c c' where
     modifyField _proxy f (a, b, c) = (a, b, f c)
     setField _proxy (a, b, _) c = (a, b, c)
+
+-- }}} Instances -- Tuples -- 3-tuple (triplet) -------------------------------
+
+-- {{{ Instances -- Tuples -- 4-tuple (quad) ----------------------------------
 
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4) = a1
@@ -773,6 +783,10 @@ instance ModifyField "thd" (a1, a2, a3, a4) (a1, a2, a3', a4) a3 a3' where
 instance HasField "curry" ((a1, a2, a3, a4) -> r) (a1 -> a2 -> a3 -> a4 -> r)
   where
     getField _proxy f a1 a2 a3 a4 = f (a1, a2, a3, a4)
+
+-- }}} Instances -- Tuples -- 4-tuple (quad) ----------------------------------
+
+-- {{{ Instances -- Tuples -- 5-tuple -----------------------------------------
 
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5) = a1
@@ -834,6 +848,10 @@ instance
         (a1 -> a2 -> a3 -> a4 -> a5 -> r)
   where
     getField _proxy f a1 a2 a3 a4 a5 = f (a1, a2, a3, a4, a5)
+
+-- }}} Instances -- Tuples -- 5-tuple -----------------------------------------
+
+-- {{{ Instances -- Tuples -- 6-tuple -----------------------------------------
 
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6) = a1
@@ -899,6 +917,10 @@ instance
         (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> r)
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 = f (a1, a2, a3, a4, a5, a6)
+
+-- }}} Instances -- Tuples -- 6-tuple -----------------------------------------
+
+-- {{{ Instances -- Tuples -- 7-tuple -----------------------------------------
 
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7) = a1
@@ -973,6 +995,10 @@ instance
         (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> r)
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 = f (a1, a2, a3, a4, a5, a6, a7)
+
+-- }}} Instances -- Tuples -- 7-tuple -----------------------------------------
+
+-- {{{ Instances -- Tuples -- 8-tuple -----------------------------------------
 
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8) = a1
@@ -1049,6 +1075,10 @@ instance
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 =
         f (a1, a2, a3, a4, a5, a6, a7, a8)
 
+-- }}} Instances -- Tuples -- 8-tuple -----------------------------------------
+
+-- {{{ Instances -- Tuples -- 9-tuple -----------------------------------------
+
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9) = a1
 
@@ -1123,6 +1153,10 @@ instance
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9)
+
+-- }}} Instances -- Tuples -- 9-tuple -----------------------------------------
+
+-- {{{ Instances -- Tuples -- 10-tuple ----------------------------------------
 
 -- | /Since 0.4.0.0/
 type instance FieldType "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) = a1
@@ -1200,6 +1234,42 @@ instance
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
+-- }}} Instances -- Tuples -- 10-tuple ----------------------------------------
+
+-- {{{ Instances -- Tuples -- 11-tuple ----------------------------------------
+
+-- | /Since 0.4.2.0/
+type instance FieldType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) = a1
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a1' =
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) = a2
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a2' =
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) = a3
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a3' =
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "curry"
+    ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) -> r) =
+        a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> r
+
 -- | /Since 0.4.2.0/
 instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) a1 where
     getField _proxy (a1, _, _, _, _, _, _, _, _, _, _) = a1
@@ -1249,6 +1319,43 @@ instance
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+
+-- }}} Instances -- Tuples -- 11-tuple ----------------------------------------
+
+-- {{{ Instances -- Tuples -- 12-tuple ----------------------------------------
+
+-- | /Since 0.4.2.0/
+type instance FieldType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) = a1
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a1' =
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) = a2
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a2' =
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) = a3
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a3' =
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "curry"
+    ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) -> r) =
+        a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> a12
+        -> r
 
 -- | /Since 0.4.2.0/
 instance HasField "fst" (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) a1
@@ -1304,6 +1411,43 @@ instance
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+
+-- }}} Instances -- Tuples -- 12-tuple ----------------------------------------
+
+-- {{{ Instances -- Tuples -- 13-tuple ----------------------------------------
+
+-- | /Since 0.4.2.0/
+type instance FieldType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) = a1
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a1' =
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) = a2
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a2' =
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) = a3
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) a3' =
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "curry"
+    ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) -> r) =
+        a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> a12
+        -> a13 -> r
 
 -- | /Since 0.4.2.0/
 instance
@@ -1369,6 +1513,43 @@ instance
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)
+
+-- }}} Instances -- Tuples -- 13-tuple ----------------------------------------
+
+-- {{{ Instances -- Tuples -- 14-tuple ----------------------------------------
+
+-- | /Since 0.4.2.0/
+type instance FieldType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) = a1
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a1' =
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) = a2
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a2' =
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) = a3
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) a3' =
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "curry"
+    ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) -> r) =
+        a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> a12
+        -> a13 -> a14 -> r
 
 -- | /Since 0.4.2.0/
 instance
@@ -1440,6 +1621,43 @@ instance
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
+
+-- }}} Instances -- Tuples -- 14-tuple ----------------------------------------
+
+-- {{{ Instances -- Tuples -- 15-tuple ----------------------------------------
+
+-- | /Since 0.4.2.0/
+type instance FieldType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) = a1
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "fst"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a1' =
+        (a1', a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) = a2
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "snd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a2' =
+        (a1, a2', a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) = a3
+
+-- | /Since 0.4.2.0/
+type instance UpdateType "thd"
+    (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) a3' =
+        (a1, a2, a3', a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
+-- | /Since 0.4.2.0/
+type instance FieldType "curry"
+    ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) -> r) =
+        a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> a12
+        -> a13 -> a14 -> a15 -> r
 
 -- | /Since 0.4.2.0/
 instance
@@ -1516,6 +1734,8 @@ instance
   where
     getField _proxy f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 =
         f (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+
+-- }}} Instances -- Tuples -- 15-tuple ----------------------------------------
 
 -- }}} Instances -- Tuples ----------------------------------------------------
 
