@@ -15,6 +15,17 @@
   creating duplicit instances, thanks to
   [Andy Morris](https://github.com/andy-morris). See
   [pull request #2](https://github.com/trskop/overloaded-records/pull/2).
+  (**change**)
+* Data type `Label (l :: Symbol)` that can be used to pass label value around.
+  (**new**)
+* Instances for `fst`, `snd`, `thd` and `curry` fields for 11-tuples, 12-tuples
+  up to 15-tuples. (**new**)
+* Instances for `head` and `tail` fields for `NonEmpty` list. (**new**)
+* Instances for `HasField` and `ModifyField` `Rec context r` where `r` is
+  monomorphic. This is just a poor man's instance, since its usability is very
+  limited, but helpful in those special cases. Hopefully we will be able to
+  find a way how to define overloaded records machinery for `Rec context r` in
+  general. (**new**)
 
 
 ## Version 0.4.1.0
