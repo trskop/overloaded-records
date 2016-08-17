@@ -50,8 +50,6 @@ add :: Int -> Bar Int -> Bar Int
 add n = bar +~ n
 ```
 
-This implementation is highly experimental and may change rapidly.
-
 More about the current status of OverloadedRecordFields language extension can
 be found on [GHC Wiki: OverloadedRecordFields][].
 

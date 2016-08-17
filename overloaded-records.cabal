@@ -11,8 +11,6 @@ description:
   .
   See README for usage examples.
   .
-  This implementation is highly experimental and may change rapidly.
-  .
   More about the current status of OverloadedRecordFields language extension
   can be found on:
   <https://ghc.haskell.org/trac/ghc/wiki/Records/OverloadedRecordFields GHC Wiki: OverloadedRecordFields>.
@@ -179,7 +177,7 @@ source-repository head
   type:                 git
   location:             git://github.com/trskop/overloaded-records.git
 
---source-repository this
---  type:                 git
---  location:             git://github.com/trskop/overloaded-records.git
---  tag:                  0.4.1.0
+source-repository this
+  type:                 git
+  location:             git://github.com/trskop/overloaded-records.git
+  tag:                  0.4.2.0
