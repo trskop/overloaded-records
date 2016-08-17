@@ -133,7 +133,7 @@ test-suite unit-tests
 
   build-depends:
       base >=4.7 && <5
-    , data-default-class ==0.0.*
+    , data-default-class ==0.0.* || ==0.1.*
     , template-haskell >=2.9 && <2.12
 
     -- {{{ Test-suite dependencies --------------------------------------------
