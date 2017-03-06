@@ -5,7 +5,7 @@
 
 [![Hackage](http://img.shields.io/hackage/v/overloaded-records.svg)][Hackage: overloaded-records]
 [![Stackage Nightly](http://stackage.org/package/overloaded-records/badge/nightly?label=stackage)](http://stackage.org/nightly/package/overloaded-records)
-[![Stackage LTS 8](http://stackage.org/package/overloaded-records/badge/lts-8?label=LTS%208)](http://stackage.org/lts-8/package/overloaded-records)
+[![Stackage LTS 8](http://stackage.org/package/overloaded-records/badge/lts-8?label=lts-8)](http://stackage.org/lts-8/package/overloaded-records)
 [![Hackage Dependencies](https://img.shields.io/hackage-deps/v/overloaded-records.svg)](http://packdeps.haskellers.com/reverse/overloaded-records)
 
 [![Build](https://travis-ci.org/trskop/overloaded-records.svg)](https://travis-ci.org/trskop/overloaded-records)
